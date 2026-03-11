@@ -386,9 +386,10 @@ async function preLoginCheck() {
                     : 'กรุณายืนยันรหัส MFA ที่ส่งไปยังอีเมล';
                 updateStatus('success', mfaMessage);
                 
-                sessionStorage.setItem('mfa_logId',    safeLogId);
-                sessionStorage.setItem('mfa_username', username);
-                sessionStorage.setItem('mfa_remember', String(remember));
+                sessionStorage.setItem('mfa_logId',       safeLogId);
+                sessionStorage.setItem('mfa_username',    username);
+                sessionStorage.setItem('mfa_remember',    String(remember));
+                sessionStorage.setItem('mfa_fingerprint', fingerprint);
                 
                 // ฝากพิกัดกลับบ้านไว้ใน Session สำหรับไปหน้า MFA
                 if (redirect_back) {
@@ -425,10 +426,11 @@ async function preLoginCheck() {
  * ล้าง sessionStorage ทุก key เมื่อ verify สำเร็จ
  */
 async function verifyMFA() {
-    const code     = document.getElementById('mfa-code')?.value.trim();
-    const logId    = sessionStorage.getItem('mfa_logId');
-    const remember = sessionStorage.getItem('mfa_remember');
-    const username = sessionStorage.getItem('mfa_username');
+    const code        = document.getElementById('mfa-code')?.value.trim();
+    const logId       = sessionStorage.getItem('mfa_logId');
+    const remember    = sessionStorage.getItem('mfa_remember');
+    const username    = sessionStorage.getItem('mfa_username');
+    const fingerprint = sessionStorage.getItem('mfa_fingerprint');
     const redirect_back = sessionStorage.getItem('mfa_redirect_back');
 
     if (!code || !logId || !username) {
@@ -439,7 +441,7 @@ async function verifyMFA() {
     try {
         const res = await secureFetch('/api/mfa', {
             method: 'POST',
-            body: JSON.stringify({ action: 'verify', logId, code, remember: remember === 'true', username, redirect_back })
+            body: JSON.stringify({ action: 'verify', logId, code, remember: remember === 'true', username, fingerprint, redirect_back })
         });
 
         if (res.ok) {
@@ -448,6 +450,7 @@ async function verifyMFA() {
             sessionStorage.removeItem('mfa_logId');
             sessionStorage.removeItem('mfa_username');
             sessionStorage.removeItem('mfa_remember');
+            sessionStorage.removeItem('mfa_fingerprint');
             sessionStorage.removeItem('mfa_redirect_back');
             
             updateStatus('success', 'ยืนยันตัวตนสำเร็จ กำลังส่งกลับไปยังแอปพลิเคชัน...');

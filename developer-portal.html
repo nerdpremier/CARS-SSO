@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Developer Portal — SSO</title>
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; form-action 'self'; base-uri 'none';">
+  <title>Developer Portal — CARS SSO</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -14,17 +16,17 @@
 <div id="particles"></div>
 
 <!-- ── Confirm Delete Overlay ── -->
-<div class="confirm-overlay" id="confirm-overlay">
+<div class="confirm-overlay" id="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title" style="display:none;">
   <div class="confirm-box">
-    <div class="confirm-icon">🗑️</div>
-    <div class="confirm-title">ลบ App นี้ใช่ไหม?</div>
+    <div class="confirm-icon" aria-hidden="true">🗑️</div>
+    <div class="confirm-title" id="confirm-title">Delete this App?</div>
     <p class="confirm-msg">
-      กำลังจะลบ <span class="confirm-app-name" id="confirm-app-name"></span><br>
-      Token ทั้งหมดของ App นี้จะถูกยกเลิกทันที และ User ที่ login ผ่าน App นี้จะถูก logout
+      You are about to delete <strong class="confirm-app-name" id="confirm-app-name"></strong>.<br>
+      All tokens for this app will be revoked immediately and any users signed in via this app will be logged out.
     </p>
     <div class="confirm-actions">
-      <button class="btn-cancel" id="btn-cancel">ยกเลิก</button>
-      <button class="btn-confirm-delete" id="btn-confirm-delete">ลบเลย</button>
+      <button class="btn-cancel" id="btn-cancel" type="button">Cancel</button>
+      <button class="btn-confirm-delete" id="btn-confirm-delete" type="button">Delete</button>
     </div>
   </div>
 </div>
@@ -35,14 +37,14 @@
   <!-- Top bar -->
   <div class="portal-topbar">
     <div class="portal-brand">
-      <div class="portal-icon">🔗</div>
+      <div class="portal-icon" aria-hidden="true">🔗</div>
       <div>
         <div class="portal-title">Developer Portal</div>
-        <div class="portal-subtitle">SSO Integration</div>
+        <div class="portal-subtitle">CARS SSO Integration</div>
       </div>
     </div>
-    <div class="user-pill">
-      <div class="user-pill-dot"></div>
+    <div class="user-pill" aria-label="Signed-in user">
+      <div class="user-pill-dot" aria-hidden="true"></div>
       <span id="user-name">...</span>
     </div>
   </div>
@@ -50,74 +52,74 @@
   <div class="portal-body">
 
     <!-- Create form -->
-    <div class="section-create">
-      <div class="section-label">➕ สร้าง App ใหม่</div>
+    <section class="section-create" aria-labelledby="create-heading">
+      <div class="section-label" id="create-heading">➕ Create New App</div>
 
-      <div id="create-status"></div>
+      <div id="create-status" role="status" aria-live="polite"></div>
 
       <div class="form-row">
         <div class="form-col">
-          <label class="field-label" for="input-name">ชื่อ App</label>
+          <label class="field-label" for="input-name">App Name</label>
           <input class="field-input" id="input-name" type="text"
-            placeholder="เช่น My Website" maxlength="128" autocomplete="off" />
+            placeholder="e.g. My Website" maxlength="128" autocomplete="off" />
         </div>
         <div class="form-col">
           <label class="field-label" for="input-uri">Callback URL</label>
           <input class="field-input" id="input-uri" type="url"
             placeholder="https://myapp.com/callback" maxlength="512" autocomplete="off" />
-          <div class="field-hint">URL ที่รับ user กลับหลัง login สำเร็จ</div>
+          <div class="field-hint">The URL users are redirected to after login</div>
         </div>
         <div>
-          <button class="btn-create" id="btn-create">สร้าง</button>
+          <button class="btn-create" id="btn-create" type="button">Create</button>
         </div>
       </div>
 
       <!-- Result box -->
-      <div class="result-box" id="result-box">
-        <div class="result-title">✅ สร้างสำเร็จ! เก็บค่าด้านล่างไว้ด้วย</div>
+      <div class="result-box" id="result-box" style="display:none;">
+        <div class="result-title">✅ Created! Save the values below.</div>
         <div class="credential-row">
           <div class="cred-label">CLIENT ID</div>
           <div class="cred-value">
             <span class="cred-text" id="res-client-id"></span>
-            <button class="btn-copy" id="copy-client-id" title="copy">📋</button>
+            <button class="btn-copy" id="copy-client-id" type="button" title="Copy to clipboard" aria-label="Copy Client ID">📋</button>
           </div>
         </div>
         <div class="credential-row">
           <div class="cred-label">CLIENT SECRET</div>
           <div class="cred-value">
             <span class="cred-text" id="res-client-secret"></span>
-            <button class="btn-copy" id="copy-client-secret" title="copy">📋</button>
+            <button class="btn-copy" id="copy-client-secret" type="button" title="Copy to clipboard" aria-label="Copy Client Secret">📋</button>
           </div>
         </div>
         <div class="warn-notice">
-          ⚠️ <strong>บันทึก Client Secret เก็บไว้ด้วย</strong> — จะไม่สามารถดูซ้ำได้อีก
-          ถ้าหายต้องสร้าง App ใหม่
+          ⚠️ <strong>Save your Client Secret now</strong> — it cannot be viewed again.
+          If lost, you will need to create a new app.
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- Apps list -->
-    <div class="section-list">
+    <section class="section-list" aria-labelledby="apps-heading">
       <div class="list-header">
-        <div class="section-label section-label--nomargin">📋 Apps ของคุณ</div>
-        <div class="apps-count" id="apps-count">กำลังโหลด...</div>
+        <div class="section-label section-label--nomargin" id="apps-heading">📋 Your Apps</div>
+        <div class="apps-count" id="apps-count" aria-live="polite">Loading...</div>
       </div>
-      <div id="apps-list">
-        <div class="skeleton"></div>
-        <div class="skeleton skeleton--sm"></div>
+      <div id="apps-list" role="list">
+        <div class="skeleton" aria-hidden="true"></div>
+        <div class="skeleton skeleton--sm" aria-hidden="true"></div>
       </div>
-    </div>
+    </section>
 
     <!-- Footer -->
     <div class="portal-footer">
-      <div class="footer-note">ทำ app ได้สูงสุด 10 apps ต่อ account</div>
-      <button class="btn-logout" id="btn-logout">ออกจากระบบ</button>
+      <div class="footer-note">Maximum 10 apps per account</div>
+      <button class="btn-logout" id="btn-logout" type="button">Sign Out</button>
     </div>
 
   </div>
 </div>
 
-<script src="/effects.js" defer></script>
-<script src="/developer-portal.js" defer></script>
+<script src="/effects.js"></script>
+<script src="/developer-portal.js"></script>
 </body>
 </html>

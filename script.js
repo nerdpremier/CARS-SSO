@@ -333,8 +333,9 @@ async function preLoginCheck() {
     const remember = document.getElementById('remember-device')?.checked;
 
     // ดึงค่า redirect_back จาก URL
+    // รองรับทั้ง ?redirect_back= (legacy) และ ?next= (OAuth consent flow)
     const urlParams = new URLSearchParams(window.location.search);
-    const redirect_back = urlParams.get('redirect_back');
+    const redirect_back = urlParams.get('next') || urlParams.get('redirect_back');
 
     if (!username || !password) {
         return updateStatus('danger', 'กรุณาระบุชื่อผู้ใช้งานและรหัสผ่าน');

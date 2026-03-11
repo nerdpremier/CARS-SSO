@@ -332,7 +332,7 @@ async function preLoginCheck() {
     const password = document.getElementById('password')?.value;
     const remember = document.getElementById('remember-device')?.checked;
 
-    // ดึงค่า redirect_back จาก URL (รองรับทั้ง ?next= จาก OAuth flow และ ?redirect_back= legacy)
+    // ดึงค่า redirect_back จาก URL
     const urlParams = new URLSearchParams(window.location.search);
     const redirect_back = urlParams.get('next') || urlParams.get('redirect_back');
 
@@ -426,22 +426,15 @@ async function preLoginCheck() {
  * ล้าง sessionStorage ทุก key เมื่อ verify สำเร็จ
  */
 async function verifyMFA() {
-    // Collect code from six OTP boxes (MK2) or legacy single input
-    const boxes = document.querySelectorAll('.otp-box');
-    const code = boxes.length
-        ? [...boxes].map(b => b.value).join('').trim()
-        : (document.getElementById('mfa-code')?.value.trim() ?? '');
-
+    const code        = document.getElementById('mfa-code')?.value.trim();
     const logId       = sessionStorage.getItem('mfa_logId');
     const remember    = sessionStorage.getItem('mfa_remember');
     const username    = sessionStorage.getItem('mfa_username');
     const fingerprint = sessionStorage.getItem('mfa_fingerprint');
     const redirect_back = sessionStorage.getItem('mfa_redirect_back');
 
-    if (!code || code.length < 6 || !logId || !username) {
-        // Shake the boxes on error
-        boxes.forEach(b => { b.classList.add('otp-error'); setTimeout(() => b.classList.remove('otp-error'), 600); });
-        return updateStatus('danger', 'กรุณาใส่รหัส 6 หลักให้ครบถ้วน');
+    if (!code || !logId || !username) {
+        return updateStatus('danger', 'ข้อมูลไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่');
     }
 
     updateStatus('loading', 'กำลังยืนยันรหัสตัวตน...');
@@ -692,19 +685,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('password')
         ?.addEventListener('input', e => checkPasswordStrength(e.target.value));
 
-    // ── OTP six-box init ──────────────────────────────────
-    if (document.querySelector('.otp-box')) {
+    if (document.getElementById('mfa-code')) {
         if (!sessionStorage.getItem('mfa_logId') || !sessionStorage.getItem('mfa_username')) {
             window.location.replace('/login');
             return;
         }
-        initOtpBoxes();
     }
     document.getElementById('mfa-form')
         ?.addEventListener('submit', e => { e.preventDefault(); withGuard(verifyMFA, e); });
-
-    // ── Password show/hide toggles ─────────────────────────
-    initPasswordToggles();
 
     document.getElementById('resend-btn')
         ?.addEventListener('click', e => withGuard(resendMFA, e));
@@ -718,89 +706,3 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('new-password')
         ?.addEventListener('input', e => checkPasswordStrength(e.target.value));
 });
-// ─────────────────────────────────────────
-// 🔢 Six-Box OTP Input (MK2)
-// ─────────────────────────────────────────
-
-/**
- * Wire up the six individual OTP boxes:
- * - Auto-advance on digit input
- * - Backspace moves to previous box
- * - Arrow keys navigate
- * - Paste fills all boxes from cursor position
- * - Adds/removes 'filled' class for visual feedback
- */
-function initOtpBoxes() {
-    const boxes = [...document.querySelectorAll('.otp-box')];
-    if (!boxes.length) return;
-
-    // Focus first empty box (or first box)
-    (boxes.find(b => !b.value) || boxes[0]).focus();
-
-    boxes.forEach((box, i) => {
-        // Input: keep only digit, advance
-        box.addEventListener('input', e => {
-            const val = e.target.value.replace(/\D/g, '');
-            e.target.value = val.slice(-1);
-            e.target.classList.toggle('filled', !!e.target.value);
-            if (val && i < boxes.length - 1) boxes[i + 1].focus();
-        });
-
-        // Keydown: backspace, arrows
-        box.addEventListener('keydown', e => {
-            if (e.key === 'Backspace') {
-                if (e.target.value) {
-                    e.target.value = '';
-                    e.target.classList.remove('filled');
-                } else if (i > 0) {
-                    boxes[i - 1].focus();
-                    boxes[i - 1].value = '';
-                    boxes[i - 1].classList.remove('filled');
-                }
-            }
-            if (e.key === 'ArrowLeft'  && i > 0)               { e.preventDefault(); boxes[i - 1].focus(); }
-            if (e.key === 'ArrowRight' && i < boxes.length - 1) { e.preventDefault(); boxes[i + 1].focus(); }
-        });
-
-        // Paste: distribute digits
-        box.addEventListener('paste', e => {
-            e.preventDefault();
-            const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, boxes.length);
-            digits.split('').forEach((ch, j) => {
-                if (boxes[i + j]) {
-                    boxes[i + j].value = ch;
-                    boxes[i + j].classList.add('filled');
-                }
-            });
-            const next = Math.min(i + digits.length, boxes.length - 1);
-            boxes[next].focus();
-        });
-
-        // Select-all on focus
-        box.addEventListener('focus', e => e.target.select());
-    });
-}
-
-// ─────────────────────────────────────────
-// 👁️ Password Show/Hide Toggle (MK2)
-// ─────────────────────────────────────────
-
-const _eyeOpen = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-const _eyeOff  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
-
-function initPasswordToggles() {
-    document.querySelectorAll('.btn-pwd-toggle').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const targetId = btn.dataset.target;
-            const input = targetId
-                ? document.getElementById(targetId)
-                : btn.closest('.input-wrap')?.querySelector('input');
-            if (!input) return;
-
-            const isHidden = input.type === 'password';
-            input.type = isHidden ? 'text' : 'password';
-            btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
-            btn.innerHTML = isHidden ? _eyeOff : _eyeOpen;
-        });
-    });
-}

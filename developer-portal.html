@@ -279,8 +279,8 @@
       Token ทั้งหมดของ App นี้จะถูกยกเลิกทันที และ User ที่ login ผ่าน App นี้จะถูก logout
     </p>
     <div class="confirm-actions">
-      <button class="btn-cancel" onclick="closeConfirm()">ยกเลิก</button>
-      <button class="btn-confirm-delete" id="btn-confirm-delete" onclick="confirmDelete()">ลบเลย</button>
+      <button class="btn-cancel" id="btn-cancel-confirm">ยกเลิก</button>
+      <button class="btn-confirm-delete" id="btn-confirm-delete">ลบเลย</button>
     </div>
   </div>
 </div>
@@ -324,7 +324,7 @@
           <div class="field-hint">URL ที่รับ user กลับหลัง login สำเร็จ</div>
         </div>
         <div>
-          <button class="btn-create" id="btn-create" onclick="createApp()">สร้าง</button>
+          <button class="btn-create" id="btn-create">สร้าง</button>
         </div>
       </div>
 
@@ -335,14 +335,14 @@
           <div class="cred-label">CLIENT ID</div>
           <div class="cred-value">
             <span class="cred-text" id="res-client-id"></span>
-            <button class="btn-copy" onclick="copyText('res-client-id', this)" title="copy">📋</button>
+            <button class="btn-copy" id="copy-client-id" title="copy">📋</button>
           </div>
         </div>
         <div class="credential-row">
           <div class="cred-label">CLIENT SECRET</div>
           <div class="cred-value">
             <span class="cred-text" id="res-client-secret"></span>
-            <button class="btn-copy" onclick="copyText('res-client-secret', this)" title="copy">📋</button>
+            <button class="btn-copy" id="copy-client-secret" title="copy">📋</button>
           </div>
         </div>
         <div class="warn-notice">
@@ -367,303 +367,13 @@
     <!-- Footer -->
     <div class="portal-footer">
       <div class="footer-note">ทำ app ได้สูงสุด 10 apps ต่อ account</div>
-      <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+      <button class="btn-logout" id="btn-logout">ออกจากระบบ</button>
     </div>
 
   </div>
 </div>
 
 <script src="/effects.js" defer></script>
-<script>
-'use strict';
-
-// ── State ──────────────────────────────────────────────────────
-let sessionToken = null;   // JWT จาก cookie (อ่านผ่าน /api/session แล้วใช้ Bearer)
-let pendingDeleteId   = null;
-let pendingDeleteName = null;
-
-// ── Init ───────────────────────────────────────────────────────
-async function init() {
-  // ตรวจ session ก่อนแสดงหน้า
-  let res;
-  try {
-    res = await fetch('/api/session', { credentials: 'include' });
-  } catch {
-    location.replace('/login');
-    return;
-  }
-
-  if (!res.ok) {
-    // ไม่ได้ login → ไปหน้า login พร้อม next URL
-    location.replace('/login?next=' + encodeURIComponent(location.href));
-    return;
-  }
-
-  const data = await res.json();
-  if (!data.authenticated) {
-    location.replace('/login?next=' + encodeURIComponent(location.href));
-    return;
-  }
-
-  // แสดงหน้า portal
-  document.body.classList.remove('auth-pending');
-  document.getElementById('user-name').textContent = data.user;
-  document.getElementById('portal').style.display = '';
-
-  // โหลด apps list
-  loadApps();
-}
-
-// ── Load apps ──────────────────────────────────────────────────
-async function loadApps() {
-  const list = document.getElementById('apps-list');
-  const count = document.getElementById('apps-count');
-
-  try {
-    const res = await fetch('/api/oauth/clients', {
-      credentials: 'include'
-    });
-
-    if (!res.ok) throw new Error('load failed');
-    const data = await res.json();
-    const apps = data.clients || [];
-
-    count.textContent = apps.length + ' / 10 apps';
-
-    if (apps.length === 0) {
-      list.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">🔌</div>
-          <div class="empty-text">ยังไม่มี App</div>
-          <div class="empty-hint">กรอกฟอร์มด้านบนเพื่อสร้าง App แรกของคุณ</div>
-        </div>`;
-      return;
-    }
-
-    list.innerHTML = apps.map((app, i) => `
-      <div class="app-card" style="animation-delay:${i * 0.05}s">
-        <div class="app-card-header">
-          <div>
-            <div class="app-name">${esc(app.name)}</div>
-            <div class="app-id">${esc(app.client_id)}</div>
-          </div>
-        </div>
-        <div class="app-uris">
-          ${(app.redirect_uris || []).map(u => `<span class="uri-chip">${esc(u)}</span>`).join('')}
-        </div>
-        <div class="app-footer">
-          <div class="app-date">สร้างเมื่อ ${formatDate(app.created_at)}</div>
-          <button class="btn-rotate"
-            onclick="askRotate('${esc(app.client_id)}', '${esc(app.name)}')">
-            🔄 Rotate Secret
-          </button>
-          <button class="btn-delete"
-            onclick="askDelete('${esc(app.client_id)}', '${esc(app.name)}')">
-            ลบ
-          </button>
-        </div>
-      </div>`).join('');
-
-  } catch {
-    list.innerHTML = `<div style="text-align:center;padding:20px;font-size:13px;color:#EF4444;">
-      โหลดข้อมูลไม่สำเร็จ กรุณา refresh หน้า</div>`;
-    count.textContent = '— apps';
-  }
-}
-
-// ── Create App ─────────────────────────────────────────────────
-async function createApp() {
-  const name = document.getElementById('input-name').value.trim();
-  const uri  = document.getElementById('input-uri').value.trim();
-  const btn  = document.getElementById('btn-create');
-  const status = document.getElementById('create-status');
-  const resultBox = document.getElementById('result-box');
-
-  // ซ่อน result เก่า
-  resultBox.classList.remove('show');
-  status.className = '';
-  status.style.display = 'none';
-
-  // Validate
-  if (!name) return showCreateError('กรุณาใส่ชื่อ App');
-  if (!uri)  return showCreateError('กรุณาใส่ Callback URL');
-
-  // ตรวจ URL format เบื้องต้น
-  try {
-    const parsed = new URL(uri);
-    const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
-    if (parsed.protocol !== 'https:' && !isLocalhost)
-      return showCreateError('Callback URL ต้องเป็น https:// (หรือ localhost สำหรับ dev)');
-  } catch {
-    return showCreateError('Callback URL format ไม่ถูกต้อง');
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'กำลังสร้าง...';
-
-  try {
-    const res = await fetch('/api/oauth/clients', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, redirect_uris: [uri] })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      showCreateError(data.error || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
-      return;
-    }
-
-    // แสดง credentials
-    document.getElementById('res-client-id').textContent     = data.client_id;
-    document.getElementById('res-client-secret').textContent = data.client_secret;
-    resultBox.classList.add('show');
-
-    // เคลียร์ form
-    document.getElementById('input-name').value = '';
-    document.getElementById('input-uri').value  = '';
-
-    // refresh list
-    loadApps();
-
-  } catch {
-    showCreateError('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'สร้าง';
-  }
-}
-
-function showCreateError(msg) {
-  const el = document.getElementById('create-status');
-  el.textContent = '⚠️ ' + msg;
-  el.className = 'danger';
-  document.getElementById('btn-create').disabled = false;
-  document.getElementById('btn-create').textContent = 'สร้าง';
-}
-
-// ── Rotate Secret ───────────────────────────────────────────────
-function askRotate(clientId, appName) {
-  if (!confirm(`⚠️ Rotate client_secret ของ "${appName}" ?\n\nToken เก่าทั้งหมดจะถูก revoke ทันที\nคุณจะต้องอัปเดต secret ในแอปพลิเคชันของคุณด้วย`)) return;
-  doRotate(clientId);
-}
-
-async function doRotate(clientId) {
-  try {
-    const res = await fetch('/api/oauth/clients', {
-      method: 'PATCH',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ client_id: clientId })
-    });
-    const data = await res.json();
-    if (!res.ok) { alert(data.error || 'Rotate ไม่สำเร็จ'); return; }
-
-    // แสดง new secret ใน alert (ผู้ใช้ต้องบันทึกเอง)
-    const msg = `✅ Rotate สำเร็จ!\n\nClient ID: ${data.client_id}\nClient Secret ใหม่:\n${data.client_secret}\n\n⚠️ คัดลอกและบันทึกไว้ทันที จะไม่สามารถดูซ้ำได้`;
-    alert(msg);
-    loadApps();
-  } catch {
-    alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
-  }
-}
-
-// ── Delete ─────────────────────────────────────────────────────
-function askDelete(clientId, appName) {
-  pendingDeleteId   = clientId;
-  pendingDeleteName = appName;
-  document.getElementById('confirm-app-name').textContent = '"' + appName + '"';
-  document.getElementById('confirm-overlay').classList.add('show');
-}
-
-function closeConfirm() {
-  pendingDeleteId = pendingDeleteName = null;
-  document.getElementById('confirm-overlay').classList.remove('show');
-}
-
-async function confirmDelete() {
-  if (!pendingDeleteId) return;
-
-  const btn = document.getElementById('btn-confirm-delete');
-  btn.disabled = true;
-  btn.textContent = 'กำลังลบ...';
-
-  try {
-    const res = await fetch('/api/oauth/clients', {
-      method: 'DELETE',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ client_id: pendingDeleteId })
-    });
-
-    if (!res.ok) {
-      const d = await res.json();
-      alert(d.error || 'ลบไม่สำเร็จ กรุณาลองใหม่');
-      return;
-    }
-
-    closeConfirm();
-    loadApps();
-
-  } catch {
-    alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'ลบเลย';
-  }
-}
-
-// ── Logout ─────────────────────────────────────────────────────
-async function logout() {
-  try { await fetch('/api/logout', { method: 'POST', credentials: 'include' }); } catch {}
-  location.replace('/login');
-}
-
-// ── Helpers ────────────────────────────────────────────────────
-
-function esc(str) {
-  return String(str)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-function formatDate(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
-async function copyText(elemId, btn) {
-  const text = document.getElementById(elemId).textContent;
-  try {
-    await navigator.clipboard.writeText(text);
-    btn.textContent = '✅';
-    setTimeout(() => { btn.textContent = '📋'; }, 1500);
-  } catch {
-    btn.textContent = '❌';
-    setTimeout(() => { btn.textContent = '📋'; }, 1500);
-  }
-}
-
-// Enter กด create
-document.addEventListener('DOMContentLoaded', () => {
-  ['input-name', 'input-uri'].forEach(id => {
-    document.getElementById(id).addEventListener('keydown', e => {
-      if (e.key === 'Enter') createApp();
-    });
-  });
-
-  // ปิด confirm เมื่อกด Escape
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeConfirm();
-  });
-});
-
-// ── Start ──────────────────────────────────────────────────────
-init();
-</script>
+<script src="/developer-portal.js" defer></script>
 </body>
 </html>

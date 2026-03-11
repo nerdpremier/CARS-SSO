@@ -266,6 +266,42 @@ function checkPasswordStrength(password) {
 }
 
 // ─────────────────────────────────────────
+// 🔄 Email Verification Polling
+// ─────────────────────────────────────────
+
+/**
+ * Poll /api/auth?action=poll-verified ทุก 3 วินาที
+ * พอ verified = true → redirect /login?verified=1 อัตโนมัติ
+ * หยุด poll หลัง 10 นาที (200 ครั้ง) เพื่อไม่ให้ request ค้างตลอดไป
+ */
+let _pollInterval = null;
+
+function startVerifiedPolling(username) {
+    let attempts = 0;
+    const MAX_ATTEMPTS = 200; // 200 × 3s = 10 นาที
+
+    _pollInterval = setInterval(async () => {
+        attempts++;
+        if (attempts > MAX_ATTEMPTS) {
+            clearInterval(_pollInterval);
+            return;
+        }
+
+        try {
+            const res  = await fetch(`/api/auth?action=poll-verified&username=${encodeURIComponent(username)}`,
+                { credentials: 'include' });
+            if (!res.ok) return; // server error → รอ poll ครั้งถัดไป
+            const data = await res.json();
+            if (data.verified) {
+                clearInterval(_pollInterval);
+                updateStatus('success', '✅ ยืนยันอีเมลสำเร็จ! กำลังนำท่านไปหน้าเข้าสู่ระบบ...');
+                setTimeout(() => window.location.href = '/login?verified=1', 1500);
+            }
+        } catch { /* network error → รอ poll ครั้งถัดไป */ }
+    }, 3000);
+}
+
+// ─────────────────────────────────────────
 // 📝 Register
 // ─────────────────────────────────────────
 
@@ -297,11 +333,11 @@ async function handleRegister() {
         const data = await res.json();
         if (res.ok) {
             if (data.email_verification) {
-                // แสดงข้อความให้ตรวจสอบ email แทนที่จะ redirect ทันที
                 updateStatus('success', '✅ สมัครสมาชิกสำเร็จ! กรุณาตรวจสอบอีเมลของคุณเพื่อยืนยันบัญชีก่อนเข้าสู่ระบบ');
-                // ซ่อนฟอร์มและแสดงเฉพาะ message
                 const form = document.getElementById('register-form') || document.querySelector('form');
                 if (form) form.style.display = 'none';
+                // เริ่ม polling — พอกดยืนยันบน mobile จะ redirect อัตโนมัติ
+                startVerifiedPolling(username);
             } else {
                 updateStatus('success', 'สมัครสมาชิกสำเร็จ! ระบบกำลังนำท่านไปหน้าเข้าสู่ระบบ...');
                 setTimeout(() => window.location.href = '/login', 1500);
@@ -402,7 +438,8 @@ async function preLoginCheck() {
             }
         } else {
             if (authData.email_not_verified) {
-                updateStatus('danger', '📧 กรุณายืนยันอีเมลของคุณก่อนเข้าสู่ระบบ (ตรวจสอบในกล่องจดหมาย หรือโฟลเดอร์ spam)');
+                // แสดงข้อความพิเศษพร้อมลิงก์แจ้งให้ตรวจ email
+                updateStatus('warning', '📧 กรุณายืนยันอีเมลของคุณก่อนเข้าสู่ระบบ (ตรวจสอบในกล่องจดหมาย หรือโฟลเดอร์ spam)');
             } else {
                 updateStatus('danger', authData.error);
             }

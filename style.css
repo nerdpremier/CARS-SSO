@@ -540,9 +540,9 @@ a:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); border
 /* ─── Developer Portal button (welcome.html) ─────────────────── */
 .btn-secondary {
   width: 100%; padding: 11px 20px;
-  border: 1.5px solid rgba(0,180,255,.25);
+  border: 1.5px solid rgba(0,180,255,.45);
   border-radius: 12px;
-  background: rgba(0,180,255,.06);
+  background: rgba(0,180,255,.10);
   color: #1D4ED8;
   font-family: var(--font); font-size: 14px; font-weight: 700;
   letter-spacing: .3px;

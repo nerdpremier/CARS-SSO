@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; form-action 'self'; base-uri 'none';">
+  <title>Verify Identity — CARS</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="particles"></div>
+  <div class="card">
+    <div class="card-glow"></div>
+    <div class="emblem" aria-hidden="true">
+      <div class="emblem-ring"></div>
+      <div class="emblem-bg">🛡️</div>
+    </div>
+    <h1 class="heading">Verify Identity</h1>
+    <p class="subtitle">Enter the 6-digit code sent to your email</p>
+
+    <div id="status-box" class="status-box" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+    <form id="mfa-form" novalidate>
+      <div class="field">
+        <label for="mfa-code">One-Time Code</label>
+        <input type="text" id="mfa-code" name="mfa-code" class="mfa-input" placeholder="000000"
+          inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}"
+          minlength="6" maxlength="6" required aria-required="true" aria-describedby="status-box">
+      </div>
+      <button type="submit" id="mfa-verify-btn" class="btn-primary">Verify Code</button>
+    </form>
+
+    <div class="footer-link footer-link-mfa">
+      <p id="resend-container">Didn&apos;t receive the code?
+        <button type="button" id="resend-btn" class="btn-link">Resend Code</button>
+      </p>
+      <a href="/login" class="back-link-muted">Cancel and return to sign in</a>
+    </div>
+  </div>
+  <script src="effects.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

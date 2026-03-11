@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; form-action 'self'; base-uri 'none';">
+  <title>CARS Single Sign-On</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="particles"></div>
+  <div class="card">
+    <div class="card-glow"></div>
+    <div class="emblem" aria-hidden="true">
+      <div class="emblem-ring"></div>
+      <div class="emblem-bg">🚗</div>
+    </div>
+    <h1 class="heading">Welcome to CARS</h1>
+    <p class="subtitle">Sign in to your account</p>
+
+    <div id="status-box" class="status-box" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <form id="login-form" novalidate>
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="Enter your username"
+          autocomplete="username" maxlength="32" required aria-required="true" aria-describedby="status-box">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Enter your password"
+          autocomplete="current-password" maxlength="128" required aria-required="true" aria-describedby="status-box">
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="remember-device" name="remember-device">
+        <label for="remember-device">Remember this device</label>
+      </div>
+      <button type="submit" id="login-btn" class="btn-primary">Sign In</button>
+    </form>
+
+    <div class="footer-link footer-link-row">
+      <a href="/forgot-password">Forgot password?</a>
+      <a href="/register">Create account</a>
+    </div>
+  </div>
+  <script src="effects.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

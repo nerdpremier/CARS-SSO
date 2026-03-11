@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Developer Portal — SSO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    /* ── Portal layout: wider than auth card ── */
+    .portal-wrap {
+      position: relative; z-index: 10;
+      width: 100%; max-width: 640px;
+      animation: cardRise .85s cubic-bezier(.16,1,.3,1) both;
+    }
+
+    /* ── Top bar ── */
+    .portal-topbar {
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      padding: 20px 28px 18px;
+      border-bottom: 1px solid rgba(0,180,255,.1);
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 0 0 1px rgba(0,180,255,.12);
+    }
+    .portal-brand { display: flex; align-items: center; gap: 12px; }
+    .portal-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: linear-gradient(145deg, #060E1F, #1D4ED8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.4), 0 0 0 1px rgba(0,180,255,.2);
+    }
+    .portal-title   { font-size: 16px; font-weight: 700; color: #060E1F; }
+    .portal-subtitle { font-size: 12px; color: #64748B; margin-top: 1px; }
+    .user-pill {
+      display: flex; align-items: center; gap: 7px;
+      background: #F0FDF4; border: 1px solid #6EE7B7;
+      border-radius: 20px; padding: 5px 12px 5px 8px;
+      font-size: 12.5px; font-weight: 600; color: #065F46;
+    }
+    .user-pill-dot { width: 7px; height: 7px; border-radius: 50%; background: #10B981; }
+
+    /* ── Body ── */
+    .portal-body {
+      background: #fff;
+      border-radius: 0 0 20px 20px;
+      box-shadow: 0 0 0 1px rgba(0,180,255,.12),
+                  0 24px 80px -8px rgba(0,10,40,.65),
+                  0 4px 24px rgba(0,0,0,.4);
+    }
+
+    /* ── Create form section ── */
+    .section-create {
+      padding: 24px 28px 20px;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    .section-label {
+      font-size: 11px; font-weight: 700; letter-spacing: .6px;
+      text-transform: uppercase; color: #94A3B8; margin-bottom: 14px;
+    }
+    .form-row { display: flex; gap: 10px; align-items: flex-end; }
+    .form-col { flex: 1; }
+    .field-label {
+      display: block; font-size: 12.5px; font-weight: 600;
+      color: #1E293B; margin-bottom: 5px;
+    }
+    .field-input {
+      width: 100%; padding: 9px 12px;
+      background: #F8FAFF; border: 1.5px solid #E2E8F0;
+      border-radius: 10px; color: #0F172A;
+      font-family: var(--font); font-size: 13.5px;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+    .field-input:focus {
+      border-color: rgba(0,180,255,.5);
+      box-shadow: 0 0 0 3px rgba(0,180,255,.12);
+    }
+    .field-input::placeholder { color: #CBD5E1; }
+    .field-hint {
+      font-size: 11px; color: #94A3B8; margin-top: 4px; line-height: 1.5;
+    }
+    .btn-create {
+      padding: 9px 20px; white-space: nowrap;
+      border: none; border-radius: 10px;
+      background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+      color: #fff; font-family: var(--font);
+      font-size: 13.5px; font-weight: 700;
+      cursor: pointer; transition: transform .2s, box-shadow .2s;
+      box-shadow: 0 4px 16px rgba(37,99,235,.45);
+    }
+    .btn-create:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(37,99,235,.55); }
+    .btn-create:active { transform: translateY(0); }
+    .btn-create:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ── Result box (แสดงหลังสร้างสำเร็จ) ── */
+    .result-box {
+      display: none;
+      margin-top: 14px;
+      background: #F0FDF4; border: 1.5px solid #6EE7B7;
+      border-radius: 12px; padding: 14px 16px;
+      animation: statusIn .3s cubic-bezier(.16,1,.3,1);
+    }
+    .result-box.show { display: block; }
+    .result-title {
+      font-size: 12px; font-weight: 700; color: #065F46;
+      margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .credential-row { margin-bottom: 8px; }
+    .credential-row:last-child { margin-bottom: 0; }
+    .cred-label { font-size: 11px; font-weight: 600; color: #64748B; margin-bottom: 3px; }
+    .cred-value {
+      display: flex; align-items: center; gap: 8px;
+      background: #fff; border: 1px solid #D1FAE5;
+      border-radius: 8px; padding: 7px 10px;
+    }
+    .cred-text {
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 11.5px; color: #0F172A; word-break: break-all; flex: 1;
+    }
+    .btn-copy {
+      background: none; border: none; cursor: pointer;
+      font-size: 14px; padding: 2px 4px; border-radius: 5px;
+      transition: background .15s; flex-shrink: 0;
+    }
+    .btn-copy:hover { background: #D1FAE5; }
+    .warn-notice {
+      margin-top: 10px; font-size: 11.5px; color: #92400E;
+      background: #FFFBEB; border: 1px solid #FCD34D;
+      border-radius: 8px; padding: 7px 10px; line-height: 1.5;
+    }
+
+    /* ── Status message ── */
+    #create-status {
+      margin-top: 10px; font-size: 13px; font-weight: 500;
+      padding: 9px 12px; border-radius: 9px; display: none;
+      animation: statusIn .3s cubic-bezier(.16,1,.3,1);
+    }
+    #create-status.danger {
+      background: #FEF2F2; color: #991B1B;
+      border: 1px solid #FECACA; border-left: 3px solid #EF4444;
+      display: block;
+    }
+
+    /* ── Apps list section ── */
+    .section-list { padding: 20px 28px 24px; }
+    .list-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .apps-count {
+      font-size: 11px; font-weight: 600; color: #94A3B8;
+      background: #F1F5F9; border-radius: 20px; padding: 3px 10px;
+    }
+
+    /* ── App card ── */
+    .app-card {
+      background: #F8FAFF; border: 1.5px solid #E2E8F0;
+      border-radius: 12px; padding: 14px 16px;
+      margin-bottom: 10px; transition: border-color .2s, box-shadow .2s;
+      animation: fadeUp .4s cubic-bezier(.16,1,.3,1) both;
+    }
+    .app-card:last-child { margin-bottom: 0; }
+    .app-card:hover { border-color: rgba(0,180,255,.3); box-shadow: 0 2px 12px rgba(0,180,255,.08); }
+    .app-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .app-name { font-size: 14px; font-weight: 700; color: #0F172A; }
+    .app-id {
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 11px; color: #64748B; margin-top: 3px;
+    }
+    .app-uris { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
+    .uri-chip {
+      font-size: 11px; color: #1D4ED8; background: #EFF6FF;
+      border: 1px solid #BFDBFE; border-radius: 6px;
+      padding: 2px 8px; font-weight: 500; word-break: break-all;
+    }
+    .app-footer {
+      margin-top: 10px; padding-top: 10px;
+      border-top: 1px solid #E2E8F0;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .app-date { font-size: 11px; color: #94A3B8; }
+    .btn-delete {
+      background: none; border: 1px solid #FECACA;
+      border-radius: 8px; padding: 4px 12px;
+      font-family: var(--font); font-size: 12px; font-weight: 600;
+      color: #EF4444; cursor: pointer; transition: background .2s, border-color .2s;
+    }
+    .btn-delete:hover { background: #FEF2F2; border-color: #EF4444; }
+    .btn-delete:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn-rotate {
+      background: none; border: 1px solid #FDE68A;
+      border-radius: 8px; padding: 4px 12px;
+      font-family: var(--font); font-size: 12px; font-weight: 600;
+      color: #92400E; cursor: pointer; transition: background .2s, border-color .2s;
+    }
+    .btn-rotate:hover { background: #FFFBEB; border-color: #F59E0B; }
+    .btn-rotate:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center; padding: 28px 0 8px;
+    }
+    .empty-icon { font-size: 32px; margin-bottom: 10px; }
+    .empty-text { font-size: 13.5px; color: #64748B; font-weight: 500; }
+    .empty-hint { font-size: 12px; color: #94A3B8; margin-top: 4px; }
+
+    /* ── Loading skeleton ── */
+    .skeleton {
+      background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 8px; height: 80px; margin-bottom: 10px;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* ── Logout row ── */
+    .portal-footer {
+      padding: 14px 28px; border-top: 1px solid #F1F5F9;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .footer-note { font-size: 11.5px; color: #94A3B8; }
+    .btn-logout {
+      background: none; border: none;
+      font-family: var(--font); font-size: 12.5px; font-weight: 600;
+      color: #64748B; cursor: pointer; transition: color .2s; padding: 0;
+    }
+    .btn-logout:hover { color: #EF4444; }
+
+    /* ── Confirm delete overlay ── */
+    .confirm-overlay {
+      display: none; position: fixed; inset: 0; z-index: 100;
+      background: rgba(3,7,18,.6); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .confirm-overlay.show { display: flex; }
+    .confirm-box {
+      background: #fff; border-radius: 16px; padding: 28px 28px 24px;
+      max-width: 360px; width: 100%;
+      box-shadow: 0 24px 80px rgba(0,0,0,.5);
+      animation: cardRise .4s cubic-bezier(.16,1,.3,1) both;
+    }
+    .confirm-icon { font-size: 28px; margin-bottom: 10px; }
+    .confirm-title { font-size: 17px; font-weight: 800; color: #0F172A; margin-bottom: 6px; }
+    .confirm-msg { font-size: 13px; color: #64748B; line-height: 1.6; margin-bottom: 20px; }
+    .confirm-app-name { font-weight: 700; color: #0F172A; }
+    .confirm-actions { display: flex; gap: 10px; }
+    .btn-cancel {
+      flex: 1; padding: 10px; border: 1.5px solid #E2E8F0; border-radius: 10px;
+      background: #fff; font-family: var(--font); font-size: 14px; font-weight: 600;
+      color: #64748B; cursor: pointer; transition: border-color .2s;
+    }
+    .btn-cancel:hover { border-color: #CBD5E1; }
+    .btn-confirm-delete {
+      flex: 1; padding: 10px; border: none; border-radius: 10px;
+      background: linear-gradient(135deg, #EF4444, #DC2626);
+      font-family: var(--font); font-size: 14px; font-weight: 700;
+      color: #fff; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(239,68,68,.4);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .btn-confirm-delete:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(239,68,68,.5); }
+  </style>
+</head>
+<body class="auth-pending">
+<div id="particles"></div>
+
+<!-- ── Confirm Delete Overlay ── -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title">ลบ App นี้ใช่ไหม?</div>
+    <p class="confirm-msg">
+      กำลังจะลบ <span class="confirm-app-name" id="confirm-app-name"></span><br>
+      Token ทั้งหมดของ App นี้จะถูกยกเลิกทันที และ User ที่ login ผ่าน App นี้จะถูก logout
+    </p>
+    <div class="confirm-actions">
+      <button class="btn-cancel" onclick="closeConfirm()">ยกเลิก</button>
+      <button class="btn-confirm-delete" id="btn-confirm-delete" onclick="confirmDelete()">ลบเลย</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Portal ── -->
+<div class="portal-wrap" id="portal" style="display:none;">
+
+  <!-- Top bar -->
+  <div class="portal-topbar">
+    <div class="portal-brand">
+      <div class="portal-icon">🔗</div>
+      <div>
+        <div class="portal-title">Developer Portal</div>
+        <div class="portal-subtitle">SSO Integration</div>
+      </div>
+    </div>
+    <div class="user-pill">
+      <div class="user-pill-dot"></div>
+      <span id="user-name">...</span>
+    </div>
+  </div>
+
+  <div class="portal-body">
+
+    <!-- Create form -->
+    <div class="section-create">
+      <div class="section-label">➕ สร้าง App ใหม่</div>
+
+      <div id="create-status"></div>
+
+      <div class="form-row">
+        <div class="form-col">
+          <label class="field-label" for="input-name">ชื่อ App</label>
+          <input class="field-input" id="input-name" type="text"
+            placeholder="เช่น My Website" maxlength="128" autocomplete="off" />
+        </div>
+        <div class="form-col">
+          <label class="field-label" for="input-uri">Callback URL</label>
+          <input class="field-input" id="input-uri" type="url"
+            placeholder="https://myapp.com/callback" maxlength="512" autocomplete="off" />
+          <div class="field-hint">URL ที่รับ user กลับหลัง login สำเร็จ</div>
+        </div>
+        <div>
+          <button class="btn-create" id="btn-create" onclick="createApp()">สร้าง</button>
+        </div>
+      </div>
+
+      <!-- Result box -->
+      <div class="result-box" id="result-box">
+        <div class="result-title">✅ สร้างสำเร็จ! เก็บค่าด้านล่างไว้ด้วย</div>
+        <div class="credential-row">
+          <div class="cred-label">CLIENT ID</div>
+          <div class="cred-value">
+            <span class="cred-text" id="res-client-id"></span>
+            <button class="btn-copy" onclick="copyText('res-client-id', this)" title="copy">📋</button>
+          </div>
+        </div>
+        <div class="credential-row">
+          <div class="cred-label">CLIENT SECRET</div>
+          <div class="cred-value">
+            <span class="cred-text" id="res-client-secret"></span>
+            <button class="btn-copy" onclick="copyText('res-client-secret', this)" title="copy">📋</button>
+          </div>
+        </div>
+        <div class="warn-notice">
+          ⚠️ <strong>บันทึก Client Secret เก็บไว้ด้วย</strong> — จะไม่สามารถดูซ้ำได้อีก
+          ถ้าหายต้องสร้าง App ใหม่
+        </div>
+      </div>
+    </div>
+
+    <!-- Apps list -->
+    <div class="section-list">
+      <div class="list-header">
+        <div class="section-label" style="margin:0;">📋 Apps ของคุณ</div>
+        <div class="apps-count" id="apps-count">กำลังโหลด...</div>
+      </div>
+      <div id="apps-list">
+        <div class="skeleton"></div>
+        <div class="skeleton" style="height:60px;opacity:.5;"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="portal-footer">
+      <div class="footer-note">ทำ app ได้สูงสุด 10 apps ต่อ account</div>
+      <button class="btn-logout" onclick="logout()">ออกจากระบบ</button>
+    </div>
+
+  </div>
+</div>
+
+<script src="/effects.js" defer></script>
+<script>
+'use strict';
+
+// ── State ──────────────────────────────────────────────────────
+let sessionToken = null;   // JWT จาก cookie (อ่านผ่าน /api/session แล้วใช้ Bearer)
+let pendingDeleteId   = null;
+let pendingDeleteName = null;
+
+// ── Init ───────────────────────────────────────────────────────
+async function init() {
+  // ตรวจ session ก่อนแสดงหน้า
+  let res;
+  try {
+    res = await fetch('/api/session', { credentials: 'include' });
+  } catch {
+    location.replace('/login');
+    return;
+  }
+
+  if (!res.ok) {
+    // ไม่ได้ login → ไปหน้า login พร้อม next URL
+    location.replace('/login?next=' + encodeURIComponent(location.href));
+    return;
+  }
+
+  const data = await res.json();
+  if (!data.authenticated) {
+    location.replace('/login?next=' + encodeURIComponent(location.href));
+    return;
+  }
+
+  // แสดงหน้า portal
+  document.body.classList.remove('auth-pending');
+  document.getElementById('user-name').textContent = data.user;
+  document.getElementById('portal').style.display = '';
+
+  // โหลด apps list
+  loadApps();
+}
+
+// ── Load apps ──────────────────────────────────────────────────
+async function loadApps() {
+  const list = document.getElementById('apps-list');
+  const count = document.getElementById('apps-count');
+
+  try {
+    const res = await fetch('/api/oauth/clients', {
+      credentials: 'include'
+    });
+
+    if (!res.ok) throw new Error('load failed');
+    const data = await res.json();
+    const apps = data.clients || [];
+
+    count.textContent = apps.length + ' / 10 apps';
+
+    if (apps.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🔌</div>
+          <div class="empty-text">ยังไม่มี App</div>
+          <div class="empty-hint">กรอกฟอร์มด้านบนเพื่อสร้าง App แรกของคุณ</div>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = apps.map((app, i) => `
+      <div class="app-card" style="animation-delay:${i * 0.05}s">
+        <div class="app-card-header">
+          <div>
+            <div class="app-name">${esc(app.name)}</div>
+            <div class="app-id">${esc(app.client_id)}</div>
+          </div>
+        </div>
+        <div class="app-uris">
+          ${(app.redirect_uris || []).map(u => `<span class="uri-chip">${esc(u)}</span>`).join('')}
+        </div>
+        <div class="app-footer">
+          <div class="app-date">สร้างเมื่อ ${formatDate(app.created_at)}</div>
+          <button class="btn-rotate"
+            onclick="askRotate('${esc(app.client_id)}', '${esc(app.name)}')">
+            🔄 Rotate Secret
+          </button>
+          <button class="btn-delete"
+            onclick="askDelete('${esc(app.client_id)}', '${esc(app.name)}')">
+            ลบ
+          </button>
+        </div>
+      </div>`).join('');
+
+  } catch {
+    list.innerHTML = `<div style="text-align:center;padding:20px;font-size:13px;color:#EF4444;">
+      โหลดข้อมูลไม่สำเร็จ กรุณา refresh หน้า</div>`;
+    count.textContent = '— apps';
+  }
+}
+
+// ── Create App ─────────────────────────────────────────────────
+async function createApp() {
+  const name = document.getElementById('input-name').value.trim();
+  const uri  = document.getElementById('input-uri').value.trim();
+  const btn  = document.getElementById('btn-create');
+  const status = document.getElementById('create-status');
+  const resultBox = document.getElementById('result-box');
+
+  // ซ่อน result เก่า
+  resultBox.classList.remove('show');
+  status.className = '';
+  status.style.display = 'none';
+
+  // Validate
+  if (!name) return showCreateError('กรุณาใส่ชื่อ App');
+  if (!uri)  return showCreateError('กรุณาใส่ Callback URL');
+
+  // ตรวจ URL format เบื้องต้น
+  try {
+    const parsed = new URL(uri);
+    const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+    if (parsed.protocol !== 'https:' && !isLocalhost)
+      return showCreateError('Callback URL ต้องเป็น https:// (หรือ localhost สำหรับ dev)');
+  } catch {
+    return showCreateError('Callback URL format ไม่ถูกต้อง');
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'กำลังสร้าง...';
+
+  try {
+    const res = await fetch('/api/oauth/clients', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, redirect_uris: [uri] })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showCreateError(data.error || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+      return;
+    }
+
+    // แสดง credentials
+    document.getElementById('res-client-id').textContent     = data.client_id;
+    document.getElementById('res-client-secret').textContent = data.client_secret;
+    resultBox.classList.add('show');
+
+    // เคลียร์ form
+    document.getElementById('input-name').value = '';
+    document.getElementById('input-uri').value  = '';
+
+    // refresh list
+    loadApps();
+
+  } catch {
+    showCreateError('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'สร้าง';
+  }
+}
+
+function showCreateError(msg) {
+  const el = document.getElementById('create-status');
+  el.textContent = '⚠️ ' + msg;
+  el.className = 'danger';
+  document.getElementById('btn-create').disabled = false;
+  document.getElementById('btn-create').textContent = 'สร้าง';
+}
+
+// ── Rotate Secret ───────────────────────────────────────────────
+function askRotate(clientId, appName) {
+  if (!confirm(`⚠️ Rotate client_secret ของ "${appName}" ?\n\nToken เก่าทั้งหมดจะถูก revoke ทันที\nคุณจะต้องอัปเดต secret ในแอปพลิเคชันของคุณด้วย`)) return;
+  doRotate(clientId);
+}
+
+async function doRotate(clientId) {
+  try {
+    const res = await fetch('/api/oauth/clients', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: clientId })
+    });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Rotate ไม่สำเร็จ'); return; }
+
+    // แสดง new secret ใน alert (ผู้ใช้ต้องบันทึกเอง)
+    const msg = `✅ Rotate สำเร็จ!\n\nClient ID: ${data.client_id}\nClient Secret ใหม่:\n${data.client_secret}\n\n⚠️ คัดลอกและบันทึกไว้ทันที จะไม่สามารถดูซ้ำได้`;
+    alert(msg);
+    loadApps();
+  } catch {
+    alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+  }
+}
+
+// ── Delete ─────────────────────────────────────────────────────
+function askDelete(clientId, appName) {
+  pendingDeleteId   = clientId;
+  pendingDeleteName = appName;
+  document.getElementById('confirm-app-name').textContent = '"' + appName + '"';
+  document.getElementById('confirm-overlay').classList.add('show');
+}
+
+function closeConfirm() {
+  pendingDeleteId = pendingDeleteName = null;
+  document.getElementById('confirm-overlay').classList.remove('show');
+}
+
+async function confirmDelete() {
+  if (!pendingDeleteId) return;
+
+  const btn = document.getElementById('btn-confirm-delete');
+  btn.disabled = true;
+  btn.textContent = 'กำลังลบ...';
+
+  try {
+    const res = await fetch('/api/oauth/clients', {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: pendingDeleteId })
+    });
+
+    if (!res.ok) {
+      const d = await res.json();
+      alert(d.error || 'ลบไม่สำเร็จ กรุณาลองใหม่');
+      return;
+    }
+
+    closeConfirm();
+    loadApps();
+
+  } catch {
+    alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'ลบเลย';
+  }
+}
+
+// ── Logout ─────────────────────────────────────────────────────
+async function logout() {
+  try { await fetch('/api/logout', { method: 'POST', credentials: 'include' }); } catch {}
+  location.replace('/login');
+}
+
+// ── Helpers ────────────────────────────────────────────────────
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+async function copyText(elemId, btn) {
+  const text = document.getElementById(elemId).textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    btn.textContent = '✅';
+    setTimeout(() => { btn.textContent = '📋'; }, 1500);
+  } catch {
+    btn.textContent = '❌';
+    setTimeout(() => { btn.textContent = '📋'; }, 1500);
+  }
+}
+
+// Enter กด create
+document.addEventListener('DOMContentLoaded', () => {
+  ['input-name', 'input-uri'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') createApp();
+    });
+  });
+
+  // ปิด confirm เมื่อกด Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeConfirm();
+  });
+});
+
+// ── Start ──────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

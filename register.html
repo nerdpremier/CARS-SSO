@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; form-action 'self'; base-uri 'none';">
+  <title>Create Account — CARS</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="particles"></div>
+  <div class="card">
+    <div class="card-glow"></div>
+    <div class="emblem" aria-hidden="true">
+      <div class="emblem-ring"></div>
+      <div class="emblem-bg">🧑🏻‍💻</div>
+    </div>
+    <h1 class="heading">Create Account</h1>
+    <p class="subtitle">Register to access the CARS</p>
+
+    <div id="status-box" class="status-box" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <form id="register-form" novalidate>
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="Letters and numbers only"
+          autocomplete="username" pattern="[A-Za-z0-9]+" maxlength="32"
+          required aria-required="true" aria-describedby="status-box">
+      </div>
+      <div class="field">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" placeholder="your@email.com"
+          autocomplete="email" maxlength="254" required aria-required="true" aria-describedby="status-box">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Create a strong password"
+          autocomplete="new-password" maxlength="128" required aria-required="true" aria-describedby="password-rules status-box">
+      </div>
+      <ul id="password-rules" class="password-rules" aria-label="Password requirements" aria-live="polite">
+        <li class="rule" id="rule-length"  role="listitem" aria-label="Not met: At least 8 characters"><span class="rule-icon" aria-hidden="true">✗</span> At least 8 characters</li>
+        <li class="rule" id="rule-upper"   role="listitem" aria-label="Not met: Uppercase letter (A-Z)"><span class="rule-icon" aria-hidden="true">✗</span> Uppercase letter (A–Z)</li>
+        <li class="rule" id="rule-lower"   role="listitem" aria-label="Not met: Lowercase letter (a-z)"><span class="rule-icon" aria-hidden="true">✗</span> Lowercase letter (a–z)</li>
+        <li class="rule" id="rule-number"  role="listitem" aria-label="Not met: Number (0-9)"><span class="rule-icon" aria-hidden="true">✗</span> Number (0–9)</li>
+        <li class="rule" id="rule-special" role="listitem" aria-label="Not met: Symbol (@$!%*?&amp;)"><span class="rule-icon" aria-hidden="true">✗</span> Symbol (@$!%*?&amp;)</li>
+      </ul>
+      <button type="submit" id="register-btn" class="btn-primary">Create Account</button>
+    </form>
+
+    <div class="footer-link">
+      Already have an account? <a href="/login">Sign in</a>
+    </div>
+  </div>
+  <script src="effects.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+// ============================================================
+// 🔐 api/reset-password.js — Execute Password Reset
+// ============================================================
+import '../startup-check.js';
+import { pool }              from '../lib/db.js';
+import { validateCsrfToken } from '../lib/csrf-utils.js';
+import { checkRateLimit }    from '../lib/rate-limit.js';
+import { getClientIp }       from '../lib/ip-utils.js';
+import {
+    setSecurityHeaders, auditLog,
+    PASS_REGEX, TOKEN_REGEX,
+    isJsonContentType, isValidBody,
+} from '../lib/response-utils.js';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+
+export default async function handler(req, res) {
+    if (req.method !== 'POST') return res.status(405).send();
+
+    setSecurityHeaders(res);
+
+    if (!isJsonContentType(req)) {
+        return res.status(415).json({ error: 'Content-Type must be application/json' });
+    }
+
+    if (!validateCsrfToken(req)) {
+        return res.status(403).json({ error: 'CSRF token ไม่ถูกต้อง' });
+    }
+
+    const ip = getClientIp(req);
+    try {
+        if (await checkRateLimit(`ip:${ip}:reset-password`, 10, 3_600_000)) {
+            auditLog('RESET_PASSWORD_IP_RATE_LIMIT', { ip });
+            return res.status(429).json({ error: 'ส่งคำขอบ่อยเกินไป กรุณารอสักครู่' });
+        }
+    } catch (rlErr) {
+        console.error('[WARN] rate-limit DB error (reset-password), failing open:', rlErr.message);
+    }
+
+    if (!isValidBody(req.body)) {
+        return res.status(400).json({ error: 'ข้อมูลไม่ถูกต้อง' });
+    }
+
+    const { token, password } = req.body;
+
+    if (typeof token !== 'string' || !TOKEN_REGEX.test(token)) {
+        return res.status(400).json({ error: 'Token ไม่ถูกต้อง' });
+    }
+    if (typeof password !== 'string' || !password) {
+        return res.status(400).json({ error: 'กรุณาระบุรหัสผ่านใหม่' });
+    }
+    if (password.length > 128) {
+        return res.status(400).json({ error: 'รหัสผ่านยาวเกินกำหนด' });
+    }
+    if (!PASS_REGEX.test(password)) {
+        return res.status(400).json({ error: 'รหัสผ่านต้องมี 8 ตัวอักษรขึ้นไป (ต้องมีตัวใหญ่, ตัวเล็ก, ตัวเลข และสัญลักษณ์)' });
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    try {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // FOR UPDATE ป้องกัน race condition: token ใช้ได้ครั้งเดียวเท่านั้น
+            const userRes = await client.query(
+                `SELECT id, username
+                 FROM users
+                 WHERE reset_token = $1
+                   AND reset_expires > NOW()
+                 FOR UPDATE`,
+                [tokenHash]
+            );
+
+            if (!userRes.rows[0]) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ error: 'Token หมดอายุหรือไม่ถูกต้อง' });
+            }
+
+            const { id: userId, username } = userRes.rows[0];
+
+            const newHash = await bcrypt.hash(password, 12);
+
+            // sessions_revoked_at = NOW() → session.js reject JWT ที่ออกก่อน timestamp นี้
+            // reset_token = NULL: ป้องกัน token reuse แม้ concurrent request
+            await client.query(
+                `UPDATE users
+                 SET password_hash       = $1,
+                     reset_token         = NULL,
+                     reset_expires       = NULL,
+                     sessions_revoked_at = NOW()
+                 WHERE id = $2`,
+                [newHash, userId]
+            );
+
+            await client.query('COMMIT');
+
+            auditLog('RESET_PASSWORD_SUCCESS', { username, ip });
+            return res.status(200).json({ success: true });
+
+        } catch (err) {
+            try { await client.query('ROLLBACK'); } catch { /* ignore */ }
+            throw err;
+        } finally {
+            client.release();
+        }
+
+    } catch (err) {
+        console.error('[ERROR] reset-password.js:', err);
+        return res.status(500).json({ error: 'เซิร์ฟเวอร์ขัดข้อง' });
+    }
+}

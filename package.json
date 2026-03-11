@@ -1,0 +1,26 @@
+{
+  "name": "secure-system",
+  "version": "1.0.0",
+  "description": "Secure authentication system with adaptive MFA",
+
+  "private": true,
+
+  "engines": {
+    "node": ">=20"
+  },
+
+  "type": "module",
+
+  "scripts": {
+    "start": "node server.js",
+    "test":  "node --experimental-vm-modules node_modules/.bin/jest"
+  },
+
+  "dependencies": {
+    "pg":           "8.13.3",
+    "nodemailer":   "6.10.1",
+    "bcryptjs":     "2.4.3",
+    "jsonwebtoken": "9.0.2",
+    "cookie":       "0.7.0"
+  }
+}

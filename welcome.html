@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; form-action 'self'; base-uri 'none';">
+  <title>Welcome — CARS Single Sign-On</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="auth-pending">
+  <div id="particles"></div>
+  <div class="card">
+      <div class="card-glow"></div>
+      <div class="emblem emblem--success" aria-hidden="true">
+        <div class="emblem-ring"></div>
+        <div class="emblem-bg">✓</div>
+      </div>
+      <h1 class="heading">Access Granted</h1>
+      <p id="welcome-message" class="subtitle-welcome" aria-label="Loading user data">
+        Welcome, <span id="user-display" class="user-display-name"></span>
+      </p>
+
+      <button type="button" id="logout-btn" class="btn-primary">Sign Out</button>
+
+      <div class="divider"><span>Developer</span></div>
+
+      <button type="button" class="btn-secondary" onclick="location.href='/developer'">
+        🔗 Developer Portal
+      </button>
+
+  </div>
+  <script src="effects.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
+

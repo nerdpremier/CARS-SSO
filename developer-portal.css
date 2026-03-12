@@ -126,7 +126,7 @@ body {
 /* ── Create Form ─────────────────────────────────────────── */
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: 14px; align-items: end;
 }
 @media (max-width: 680px) { .form-row { grid-template-columns: 1fr; } }

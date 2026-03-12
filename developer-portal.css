@@ -448,3 +448,16 @@ body {
 .btn-confirm-delete:hover  { background: #D44; }
 .btn-confirm-delete:active { transform: translateY(1px); }
 .btn-confirm-delete:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,85,85,.25); }
+
+.btn-confirm-rotate {
+  padding: 11px 0;
+  border: none; border-radius: 11px;
+  background: #f59e0b; color: #fff;
+  font-family: var(--font); font-size: 14px; font-weight: 700;
+  cursor: pointer;
+  transition: background .2s, transform .14s;
+  box-shadow: 0 3px 12px rgba(245,158,11,.3);
+}
+.btn-confirm-rotate:hover  { background: #d97706; }
+.btn-confirm-rotate:active { transform: translateY(1px); }
+.btn-confirm-rotate:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(245,158,11,.25); }

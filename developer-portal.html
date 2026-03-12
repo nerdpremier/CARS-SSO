@@ -43,7 +43,7 @@
       </p>
       <div class="confirm-actions">
         <button class="btn-cancel"         id="btn-rotate-cancel"  type="button">Cancel</button>
-        <button class="btn-confirm-delete" id="btn-confirm-rotate" type="button" style="background:var(--color-warning,#f59e0b)">Rotate</button>
+        <button class="btn-confirm-rotate" id="btn-confirm-rotate" type="button">Rotate</button>
       </div>
     </div>
   </div>
@@ -98,18 +98,7 @@
           </div>
         </div>
         <p class="field-hint form-below-hint">Where users land after a successful login</p>
-        <div style="display:flex;align-items:center;gap:20px;margin-top:12px;flex-wrap:wrap">
-          <span class="field-hint" style="margin:0">Allowed Scopes</span>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;opacity:.7">
-            <input type="checkbox" id="scope-profile" checked disabled> profile (always)
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-            <input type="checkbox" id="scope-email"> email
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-            <input type="checkbox" id="scope-openid"> openid
-          </label>
-        </div>
+
 
         <div class="result-box" id="result-box" hidden>
           <div class="result-header">

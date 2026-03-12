@@ -24,7 +24,7 @@
       <h1 class="page-title" data-stagger>Check your <em>email</em></h1>
       <p class="page-subtitle" data-stagger>Enter the 6-digit code we sent to your email address</p>
 
-      <div id="status-box" class="status-box" role="alert" aria-live="assertive" aria-atomic="true" data-stagger></div>
+      <div id="status-box" class="status-box" role="alert" aria-live="assertive" aria-atomic="true" data-stagger hidden></div>
 
       <form id="mfa-form" novalidate data-stagger>
         <div class="field">
@@ -38,20 +38,16 @@
             minlength="6" maxlength="6"
             required aria-required="true" aria-describedby="status-box">
         </div>
-
         <button type="submit" id="mfa-verify-btn" class="btn-primary">Verify Code</button>
       </form>
 
-      <div class="footer-link" style="text-align:center; margin-top:18px;" data-stagger>
-        <p style="font-size:13.5px; color:var(--ink-2); margin-bottom:8px;">
+      <!-- No inline style="" or onmouseover="" — btn-link class handles hover in CSS -->
+      <div class="footer-link" data-stagger>
+        <p class="mfa-footer-note">
           Didn&apos;t receive a code?
-          <button type="button" id="resend-btn"
-            style="background:none; border:none; color:var(--gold); font-weight:600; font-size:13.5px; cursor:pointer; padding:0; font-family:var(--font); transition:color .15s;"
-            onmouseover="this.style.color='var(--gold-l)'" onmouseout="this.style.color='var(--gold)'">
-            Resend Code
-          </button>
+          <button type="button" id="resend-btn" class="btn-link">Resend Code</button>
         </p>
-        <a href="/login" style="font-size:13px; color:var(--ink-3);">Cancel and return to sign in</a>
+        <a href="/login" class="mfa-cancel-link">Cancel and return to sign in</a>
       </div>
 
     </div>

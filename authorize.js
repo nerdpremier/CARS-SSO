@@ -1,4 +1,5 @@
 // authorize.js — CARS SSO OAuth Consent Page
+// CSP-safe: no element.style assignments; show/hide via element.hidden.
 'use strict';
 
 let _oauthParams  = {};
@@ -9,9 +10,9 @@ const $id = id => document.getElementById(id);
 function showStatus(msg, type = 'danger') {
   const el = $id('status-msg');
   if (!el) return;
-  el.textContent    = msg;
-  el.className      = `status-box ${type}`;
-  el.style.display  = '';   // let CSS handle display mode
+  el.textContent = msg;
+  el.className   = `status-box ${type}`;
+  el.hidden      = false;   // CSP-safe — sets [hidden] attr, CSS handles display
 }
 
 function setSubmitting(on) {
@@ -20,26 +21,22 @@ function setSubmitting(on) {
   if (!btnAllow || !btnDeny) return;
   btnAllow.disabled = on;
   btnDeny.disabled  = on;
-  if (on) {
-    btnAllow.textContent = 'Processing…';
-    btnAllow.classList.add('btn--loading');
-  } else {
-    btnAllow.textContent = 'Allow Access';
-    btnAllow.classList.remove('btn--loading');
-  }
+  if (on) { btnAllow.textContent = 'Processing…'; btnAllow.classList.add('btn--loading'); }
+  else    { btnAllow.textContent = 'Allow Access'; btnAllow.classList.remove('btn--loading'); }
 }
 
 function showError(msg) {
-  $id('loading-overlay').style.display = 'none';
-  $id('consent-ui').style.display      = 'none';
-  $id('error-ui').style.display        = 'block';
-  $id('error-msg').textContent         = msg;
+  $id('loading-overlay').hidden = true;   // CSP-safe
+  $id('consent-ui').hidden      = true;
+  $id('error-ui').hidden        = false;
+  $id('error-msg').textContent  = msg;
 }
 
 async function init() {
+  // Remove auth-pending class to reveal the layout (CSS handles visibility)
   document.body.classList.remove('auth-pending');
-  document.body.style.visibility = '';
-  $id('main-card').style.display = '';
+  // No style.visibility assignment — auth-pending class removal is enough
+  $id('main-card').hidden = false;   // CSP-safe
 
   const sp           = new URLSearchParams(window.location.search);
   const clientId     = sp.get('client_id');
@@ -80,15 +77,16 @@ async function init() {
   $id('consent-subtitle').textContent = `"${appName}" is requesting access to your account.`;
   $id('user-chip-name').textContent   = username;
   $id('footer-username').textContent  = username;
-  $id('user-chip').style.display      = 'inline-flex';
-  $id('loading-overlay').style.display = 'none';
-  $id('consent-ui').style.display      = 'block';
+  $id('user-chip').hidden             = false;   // :not([hidden]) CSS shows as inline-flex
+  $id('loading-overlay').hidden       = true;
+  $id('consent-ui').hidden            = false;
 }
 
 async function handleAllow() {
   if (_isSubmitting) return;
   _isSubmitting = true;
-  $id('status-msg').className = 'status-box';
+  const sm = $id('status-msg');
+  if (sm) { sm.className = 'status-box'; sm.hidden = true; }
   setSubmitting(true);
 
   try {
@@ -102,24 +100,19 @@ async function handleAllow() {
     });
     const data = await res.json();
     if (!res.ok) {
-      if (res.status === 401) {
-        window.location.replace(`/login?next=${encodeURIComponent(window.location.href)}`);
-        return;
-      }
+      if (res.status === 401) { window.location.replace(`/login?next=${encodeURIComponent(window.location.href)}`); return; }
       showStatus(data?.error || 'An error occurred. Please try again.');
-      setSubmitting(false);
-      _isSubmitting = false;
+      setSubmitting(false); _isSubmitting = false;
       return;
     }
     window.location.replace(data.redirect_url);
   } catch {
     showStatus('Unable to connect to server. Please try again.');
-    setSubmitting(false);
-    _isSubmitting = false;
+    setSubmitting(false); _isSubmitting = false;
   }
 }
 
-// FIX: guard against _oauthParams being empty if init hasn't populated it yet
+// FIX: guard so handleDeny can't crash if init hasn't completed yet
 function handleDeny() {
   if (_isSubmitting) return;
   if (!_oauthParams.redirectUri || !_oauthParams.state) {

@@ -10,131 +10,24 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
-  <style>
-    .consent-card { max-width: 440px; text-align: center; }
-
-    /* App connector row */
-    .app-connector {
-      display: flex; align-items: center; justify-content: center;
-      gap: 14px; margin-bottom: 22px;
-    }
-    .app-icon-cars {
-      width: 46px; height: 46px;
-      background: var(--gold-bg);
-      border: 1px solid var(--gold-bd);
-      border-radius: 13px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; flex-shrink: 0;
-    }
-    .app-connector-arrow {
-      color: var(--ink-3); font-size: 16px; letter-spacing: 2px;
-    }
-    .app-icon-ext {
-      width: 46px; height: 46px;
-      background: var(--surface-2);
-      border: 1px solid var(--border-h);
-      border-radius: 13px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; flex-shrink: 0;
-    }
-
-    /* App badge */
-    .app-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: var(--gold-bg);
-      border: 1px solid var(--gold-bd);
-      border-radius: 20px;
-      padding: 4px 12px;
-      font-size: 11.5px; font-weight: 700; color: var(--gold);
-      margin-bottom: 14px;
-    }
-    .app-badge-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
-
-    /* Permissions box */
-    .permission-box {
-      background: var(--bg-2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 4px 0;
-      margin: 18px 0 14px;
-      text-align: left;
-    }
-    .permission-item {
-      display: flex; align-items: center; gap: 13px;
-      padding: 13px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .permission-item:last-child { border-bottom: none; }
-    .permission-icon { font-size: 18px; flex-shrink: 0; }
-    .permission-name { font-size: 13.5px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
-    .permission-desc { font-size: 12px; color: var(--ink-3); }
-
-    .scope-note { font-size: 12px; color: var(--ink-3); margin-bottom: 20px; }
-
-    /* User chip */
-    .user-chip {
-      display: inline-flex; align-items: center; gap: 7px;
-      background: var(--surface-2);
-      border: 1px solid var(--border-h);
-      border-radius: 20px;
-      padding: 5px 13px;
-      font-size: 12.5px; font-weight: 600; color: var(--ink-2);
-      margin-bottom: 20px;
-    }
-    .user-chip-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--ok);
-      box-shadow: 0 0 5px var(--ok);
-    }
-
-    /* Deny button */
-    .btn-deny {
-      display: block; width: 100%;
-      padding: 12px 20px;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-btn);
-      color: var(--ink-3);
-      font-family: var(--font); font-size: 14px; font-weight: 600;
-      cursor: pointer; text-align: center;
-      transition: border-color .2s, color .2s, background .2s;
-      margin-top: 10px;
-    }
-    .btn-deny:hover { border-color: var(--err-bd); color: var(--err); background: var(--err-bg); }
-    .btn-deny:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,85,85,.2); }
-
-    /* Loading state */
-    .loading-state {
-      display: flex; flex-direction: column; align-items: center;
-      gap: 16px; padding: 30px 0;
-    }
-    .spinner {
-      width: 32px; height: 32px;
-      border: 2.5px solid var(--border);
-      border-top-color: var(--gold);
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-    }
-    .loading-text { font-size: 13.5px; color: var(--ink-3); }
-
-    .footer-signed { margin-top: 20px; font-size: 12px; color: var(--ink-3); }
-    .footer-signed strong { color: var(--ink-2); font-weight: 600; }
-    .footer-signed a { color: var(--gold); font-weight: 600; text-decoration: none; }
-    .footer-signed a:hover { text-decoration: underline; }
-  </style>
+  <!-- No <style> block — all styles are in style.css (CSP compliant) -->
 </head>
 <body class="auth-pending">
   <div class="auth-layout">
-    <div class="auth-card consent-card" id="main-card" style="display:none;">
+    <!--
+      main-card starts hidden via [hidden] attribute.
+      authorize.js sets element.hidden = false (CSP-safe — not an inline style).
+    -->
+    <div class="auth-card consent-card" id="main-card" hidden>
 
-      <!-- Loading -->
+      <!-- Loading overlay — visible initially; hidden after init() -->
       <div id="loading-overlay" class="loading-state">
         <div class="spinner" aria-hidden="true"></div>
         <p class="loading-text">Verifying request…</p>
       </div>
 
-      <!-- Consent UI -->
-      <div id="consent-ui" style="display:none;">
+      <!-- Consent UI — hidden initially, shown after init() -->
+      <div id="consent-ui" hidden>
         <div class="app-connector" aria-hidden="true">
           <div class="app-icon-cars">🚗</div>
           <div class="app-connector-arrow">⟷</div>
@@ -146,15 +39,18 @@
           <span id="app-badge-name">Application</span>
         </div>
 
-        <h1 class="page-title" style="margin-bottom:6px;">Authorize <em>access</em></h1>
-        <p class="page-subtitle" id="consent-subtitle" style="margin-bottom:0;">Loading…</p>
+        <!-- authorize-title-tight / consent-subtitle-tight replace style="margin:..." -->
+        <h1 class="page-title authorize-title-tight">Authorize <em>access</em></h1>
+        <p class="page-subtitle consent-subtitle-tight" id="consent-subtitle">Loading…</p>
 
-        <div class="user-chip" id="user-chip" style="display:none;">
+        <!-- user-chip: hidden attr; authorize.js uses element.hidden=false -->
+        <div class="user-chip" id="user-chip" hidden>
           <div class="user-chip-dot" aria-hidden="true"></div>
           <span id="user-chip-name">user</span>
         </div>
 
-        <div id="status-msg" class="status-box" role="alert" aria-live="assertive" aria-atomic="true"></div>
+        <!-- status-msg: hidden attr initially; showStatus() uses element.hidden=false -->
+        <div id="status-msg" class="status-box" role="alert" aria-live="assertive" aria-atomic="true" hidden></div>
 
         <div class="permission-box" role="list" aria-label="Requested permissions">
           <div class="permission-item" role="listitem">
@@ -184,14 +80,15 @@
         </div>
       </div>
 
-      <!-- Error state -->
-      <div id="error-ui" style="display:none; text-align:center;">
-        <div style="font-size:36px; margin-bottom:16px;" aria-hidden="true">⚠️</div>
+      <!-- Error state — hidden initially; showError() uses element.hidden=false -->
+      <div id="error-ui" class="authorize-error-ui" hidden>
+        <div class="authorize-error-icon" aria-hidden="true">⚠️</div>
         <h1 class="page-title">Something went <em>wrong</em></h1>
-        <div id="error-msg" class="status-box danger" role="alert" style="display:block; text-align:left;">
+        <!-- error-msg: always shown as block when #error-ui is visible -->
+        <div id="error-msg" class="status-box danger" role="alert">
           Unable to load authorization data
         </div>
-        <p style="font-size:13.5px; color:var(--ink-3);">Please contact the application owner.</p>
+        <p class="authorize-error-note">Please contact the application owner.</p>
       </div>
 
     </div>

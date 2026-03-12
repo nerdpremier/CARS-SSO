@@ -10,95 +10,20 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
-  <style>
-    .session-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: var(--ok-bg);
-      border: 1px solid var(--ok-bd);
-      border-radius: 20px;
-      padding: 5px 14px 5px 10px;
-      font-size: 12px; font-weight: 600; color: var(--ok);
-      margin-bottom: 14px;
-    }
-    .session-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--ok);
-      box-shadow: 0 0 7px var(--ok);
-      animation: dotPulse 2s ease-in-out infinite;
-    }
-    @keyframes dotPulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: .5; transform: scale(.75); }
-    }
-
-    .welcome-user {
-      font-size: 14px; color: var(--ink-2);
-      margin-bottom: 28px;
-    }
-    .welcome-user strong { font-weight: 700; color: var(--gold); }
-
-    .action-divider {
-      display: flex; align-items: center; gap: 12px;
-      margin-bottom: 14px;
-      color: var(--ink-3);
-      font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
-    }
-    .action-divider::before, .action-divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-
-    .btn-portal {
-      display: block; width: 100%;
-      padding: 13px 20px;
-      background: var(--surface-2);
-      border: 1px solid var(--border-h);
-      border-radius: var(--radius-btn);
-      color: var(--ink);
-      font-family: var(--font);
-      font-size: 14.5px; font-weight: 600;
-      cursor: pointer; text-align: center;
-      transition: border-color .2s, background .2s, color .2s;
-      margin-bottom: 10px;
-      position: relative; overflow: hidden;
-    }
-    .btn-portal:hover {
-      border-color: var(--border-act);
-      background: var(--gold-bg);
-      color: var(--gold);
-    }
-    .btn-portal:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
-
-    .btn-signout {
-      display: block; width: 100%;
-      padding: 13px 20px;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-btn);
-      color: var(--ink-3);
-      font-family: var(--font);
-      font-size: 14.5px; font-weight: 600;
-      cursor: pointer; text-align: center;
-      transition: border-color .2s, color .2s, background .2s;
-      position: relative; overflow: hidden;
-    }
-    .btn-signout:hover {
-      border-color: var(--err-bd);
-      color: var(--err);
-      background: var(--err-bg);
-    }
-    .btn-signout:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,85,85,.2); }
-  </style>
+  <!-- No <style> block — all styles are in style.css (CSP compliant) -->
 </head>
 <body class="auth-pending">
   <div class="auth-layout">
-    <div class="auth-card" style="text-align:center;">
+    <!-- auth-card--centered and brand-row--centered classes replace inline style="" attrs -->
+    <div class="auth-card auth-card--centered">
 
-      <div class="brand-row" style="justify-content:center;" data-stagger>
+      <div class="brand-row brand-row--centered" data-stagger>
         <div class="brand-logo" aria-hidden="true">🚗</div>
         <span class="brand-name">CARS SSO</span>
       </div>
 
-      <div style="font-size:40px; margin-bottom:16px;" aria-hidden="true" data-stagger>✓</div>
+      <!-- welcome-check class replaces style="font-size:40px; margin-bottom:16px;" -->
+      <div class="welcome-check" aria-hidden="true" data-stagger>✓</div>
 
       <h1 class="page-title" data-stagger>Access <em>granted</em></h1>
 

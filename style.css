@@ -367,8 +367,7 @@ body.page-exit .portal-wrap { animation: pageOut .28s cubic-bezier(.4,0,1,1) for
 .btn-primary:active { transform: translateY(0); }
 .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 .btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
-.btn--loading { pointer-events: none; opacity: .75; }
-.btn--loading::after { content: ''; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; margin-left: 8px; flex-shrink: 0; }
+.btn--loading { pointer-events: none; opacity: .55; }
 
 .btn-link { background: none; border: none; color: var(--accent); font-family: var(--font); font-size: inherit; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color .15s, color .15s; }
 .btn-link:hover { text-decoration-color: currentColor; color: var(--accent-d); }

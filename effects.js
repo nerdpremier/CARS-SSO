@@ -25,11 +25,12 @@
 
     /* ── Nebulae (drift slowly, parallax with mouse) ─── */
     var NEBULA_DEFS = [
-      { rx:.12, ry:.18, r:420, c:[80,55,200],  a:.16, spd:.00018, ang:0.9,  pax:.018 },
-      { rx:.82, ry:.22, r:340, c:[20,90,220],  a:.12, spd:.00014, ang:2.1,  pax:.012 },
-      { rx:.55, ry:.78, r:380, c:[55,15,160],  a:.11, spd:.00020, ang:4.4,  pax:.015 },
-      { rx:.25, ry:.62, r:260, c:[0,55,140],   a:.09, spd:.00016, ang:1.5,  pax:.010 },
-      { rx:.70, ry:.48, r:200, c:[100,30,180], a:.07, spd:.00022, ang:3.3,  pax:.008 },
+      { rx:.15, ry:.20, r:460, c:[110,60,230],  a:.18, spd:.00016, ang:0.9,  pax:.018 },
+      { rx:.80, ry:.18, r:360, c:[30,160,200],  a:.14, spd:.00013, ang:2.1,  pax:.012 },
+      { rx:.50, ry:.80, r:400, c:[160,30,200],  a:.13, spd:.00019, ang:4.4,  pax:.015 },
+      { rx:.22, ry:.65, r:280, c:[20,100,200],  a:.10, spd:.00015, ang:1.5,  pax:.010 },
+      { rx:.72, ry:.50, r:240, c:[60,200,180],  a:.09, spd:.00021, ang:3.3,  pax:.008 },
+      { rx:.40, ry:.35, r:200, c:[200,80,150],  a:.07, spd:.00024, ang:5.1,  pax:.006 },
     ];
     var nebulae = [];
     function buildNebulae() {
@@ -117,7 +118,7 @@
     var stars = [];
     function spawnStars() {
       stars = [];
-      var total = Math.min(260, Math.floor(W * H / 4800));
+      var total = Math.min(320, Math.floor(W * H / 3800));
       for (var i = 0; i < total; i++) {
         var layer = i < total*.55 ? 0 : i < total*.82 ? 1 : 2;
         stars.push(new Star(layer));
@@ -175,11 +176,11 @@
     /* ── Mouse glow ─────────────────────────────────── */
     function drawMouseGlow() {
       if (mouse.x <= 0) return;
-      var g = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 200);
-      g.addColorStop(0,  'rgba(100,130,255,.07)');
+      var g = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 260);
+      g.addColorStop(0,  'rgba(120,100,255,.09)');
       g.addColorStop(1,  'rgba(100,130,255,0)');
       ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 200, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 260, 0, Math.PI*2); ctx.fill();
     }
 
     /* ── Main loop ──────────────────────────────────── */
@@ -198,6 +199,12 @@
       var mx = mouse.x / W, my = mouse.y / H;
 
       ctx.clearRect(0, 0, W, H);
+      // soft base gradient: deep indigo at top, near-black at bottom
+      var bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      bgGrad.addColorStop(0, '#0d0f26');
+      bgGrad.addColorStop(1, '#06080f');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
 
       updateNebulae();
       drawNebulae();

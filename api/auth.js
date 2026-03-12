@@ -255,23 +255,26 @@ export default async function handler(req, res) {
                 console.error('[WARN] auth.js email_verifications insert failed:', verifyErr.message);
             }
 
-            // ส่ง verification email (fire-and-forget — ไม่ block response)
+            // ส่ง verification email — await เพื่อให้ Vercel ไม่ตัด connection ก่อน email ส่งเสร็จ
             if (verifyInserted) {
                 const baseUrl     = process.env.BASE_URL;
                 const verifyLink  = `${baseUrl}/api/auth?action=verify-email&token=${rawVerifyToken}`;
-                mailTransporter.sendMail({
-                    from:    `"CARS SSO" <${process.env.EMAIL_USER}>`,
-                    to:      emailNormalized,
-                    subject: '✅ Verify your email — CARS SSO',
-                    html:    `<h2>Welcome, ${username}!</h2>
-                              <p>Click the link below to verify your email address:</p>
-                              <p><a href="${verifyLink}">${verifyLink}</a></p>
-                              <p>This link expires in 24 hours.</p>
-                              <p>If you did not create an account, you can safely ignore this email.</p>`
-                }).catch(mailErr => {
+                try {
+                    await mailTransporter.sendMail({
+                        from:    `"CARS SSO" <${process.env.EMAIL_USER}>`,
+                        to:      emailNormalized,
+                        subject: '✅ Verify your email — CARS SSO',
+                        html:    `<h2>Welcome, ${username}!</h2>
+                                  <p>Click the link below to verify your email address:</p>
+                                  <p><a href="${verifyLink}">${verifyLink}</a></p>
+                                  <p>This link expires in 24 hours.</p>
+                                  <p>If you did not create an account, you can safely ignore this email.</p>`
+                    });
+                    auditLog('REGISTER_VERIFY_EMAIL_SENT', { username, ip });
+                } catch (mailErr) {
                     console.error('[WARN] auth.js verification email send failed:', mailErr.message);
                     auditLog('REGISTER_VERIFY_EMAIL_FAIL', { username, ip });
-                });
+                }
             }
 
             return res.status(200).json({

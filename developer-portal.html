@@ -14,11 +14,6 @@
 </head>
 <body class="auth-pending">
 
-  <!--
-    confirm-overlay: uses [hidden] attribute for show/hide.
-    developer-portal.js sets element.hidden = true/false (CSP-safe).
-    CSS .confirm-overlay:not([hidden]) { display: flex } in style.css.
-  -->
   <div class="confirm-overlay" id="confirm-overlay"
        role="dialog" aria-modal="true" aria-labelledby="confirm-title-text"
        hidden>
@@ -64,7 +59,6 @@
           <div class="section-label" id="create-heading">Create New App</div>
         </div>
 
-        <!-- create-status: hidden initially; showCreateError uses element.hidden=false -->
         <div id="create-status" role="status" aria-live="polite" hidden></div>
 
         <div class="form-row">
@@ -84,7 +78,6 @@
           </div>
         </div>
 
-        <!-- result-box: hidden initially; createApp() uses element.hidden=false -->
         <div class="result-box" id="result-box" hidden>
           <div class="result-header">
             <div class="result-check" aria-hidden="true">✅</div>

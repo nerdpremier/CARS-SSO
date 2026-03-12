@@ -10,23 +10,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
-  <!-- No <style> block — all styles are in style.css (CSP compliant) -->
 </head>
 <body class="auth-pending">
   <div class="auth-layout">
-    <!--
-      main-card starts hidden via [hidden] attribute.
-      authorize.js sets element.hidden = false (CSP-safe — not an inline style).
-    -->
     <div class="auth-card consent-card" id="main-card" hidden>
 
-      <!-- Loading overlay — visible initially; hidden after init() -->
+      <!-- Loading overlay -->
       <div id="loading-overlay" class="loading-state">
         <div class="spinner" aria-hidden="true"></div>
         <p class="loading-text">Verifying request…</p>
       </div>
 
-      <!-- Consent UI — hidden initially, shown after init() -->
+      <!-- Consent UI -->
       <div id="consent-ui" hidden>
         <div class="app-connector" aria-hidden="true">
           <div class="app-icon-cars">🚗</div>
@@ -39,17 +34,14 @@
           <span id="app-badge-name">Application</span>
         </div>
 
-        <!-- authorize-title-tight / consent-subtitle-tight replace style="margin:..." -->
         <h1 class="page-title authorize-title-tight">Authorize <em>access</em></h1>
         <p class="page-subtitle consent-subtitle-tight" id="consent-subtitle">Loading…</p>
 
-        <!-- user-chip: hidden attr; authorize.js uses element.hidden=false -->
         <div class="user-chip" id="user-chip" hidden>
           <div class="user-chip-dot" aria-hidden="true"></div>
           <span id="user-chip-name">user</span>
         </div>
 
-        <!-- status-msg: hidden attr initially; showStatus() uses element.hidden=false -->
         <div id="status-msg" class="status-box" role="alert" aria-live="assertive" aria-atomic="true" hidden></div>
 
         <div class="permission-box" role="list" aria-label="Requested permissions">
@@ -80,11 +72,10 @@
         </div>
       </div>
 
-      <!-- Error state — hidden initially; showError() uses element.hidden=false -->
+      <!-- Error state -->
       <div id="error-ui" class="authorize-error-ui" hidden>
         <div class="authorize-error-icon" aria-hidden="true">⚠️</div>
         <h1 class="page-title">Something went <em>wrong</em></h1>
-        <!-- error-msg: always shown as block when #error-ui is visible -->
         <div id="error-msg" class="status-box danger" role="alert">
           Unable to load authorization data
         </div>

@@ -340,7 +340,12 @@ body {
 .btn-logout:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,85,85,.2); }
 
 /* ── Confirm Overlay ─────────────────────────────────────── */
+/* Default hidden — explicit display:none beats browser [hidden]{display:none} when
+   other rules on this class have higher specificity */
 .confirm-overlay {
+  display: none;
+}
+.confirm-overlay:not([hidden]) {
   position: fixed; inset: 0; z-index: 200;
   background: rgba(12,20,37,0.45);
   backdrop-filter: blur(8px);

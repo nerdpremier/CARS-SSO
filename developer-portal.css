@@ -3,6 +3,20 @@
  * Dark "Vault" dashboard theme
  */
 
+/* ── Portal Back Button ──────────────────────────────────── */
+.portal-back {
+  margin-bottom: 0;
+  margin-right: 4px;
+  border-color: var(--border);
+  color: var(--ink-3);
+  font-size: 12px;
+}
+.portal-back:hover {
+  border-color: var(--gold-bd);
+  color: var(--gold);
+  background: var(--gold-bg);
+}
+
 /* ── Layout ──────────────────────────────────────────────── */
 body {
   background: var(--bg);

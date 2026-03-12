@@ -13,10 +13,7 @@
   /* ══════════════════════════════════════════════════════════
      1. CANVAS PARTICLE BACKGROUND
      ══════════════════════════════════════════════════════════ */
-  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  if (!prefersReduced) {
-    (function initCanvas() {
+  (function initCanvas() {
       var canvas = document.createElement('canvas');
       canvas.id = 'bg-canvas';
       canvas.setAttribute('aria-hidden', 'true');
@@ -112,7 +109,6 @@
 
       resize(); spawn(); loop();
     })();
-  }
 
 
   /* ══════════════════════════════════════════════════════════

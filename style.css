@@ -379,19 +379,19 @@ body.page-exit .portal-wrap { animation: pageOut .28s cubic-bezier(.4,0,1,1) for
   color: var(--ink-2); font-family: var(--font); font-size: 14.5px; font-weight: 700;
   cursor: pointer; text-align: center;
   transition: border-color .18s, background .18s, color .18s, transform .14s, box-shadow .18s;
-  margin-bottom: 10px; position: relative; overflow: hidden;
+  margin-bottom: 28px; position: relative; overflow: hidden;
 }
 .btn-portal:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-l); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(79,110,247,.12); }
 .btn-portal:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
 
 .btn-signout {
-  display: block; width: 100%; padding: 12px 20px;
+  display: block; width: 100%; padding: 10px 20px;
   background: transparent; border: 1.5px solid var(--border); border-radius: var(--radius-btn);
-  color: var(--muted); font-family: var(--font); font-size: 14.5px; font-weight: 700;
-  cursor: pointer; text-align: center;
-  transition: border-color .18s, color .18s, background .18s; position: relative; overflow: hidden;
+  color: var(--muted); font-family: var(--font); font-size: 13.5px; font-weight: 600;
+  cursor: pointer; text-align: center; opacity: .7;
+  transition: border-color .18s, color .18s, background .18s, opacity .18s; position: relative; overflow: hidden;
 }
-.btn-signout:hover { border-color: var(--err-bd); color: var(--err); background: var(--err-bg); }
+.btn-signout:hover { border-color: var(--err-bd); color: var(--err); background: var(--err-bg); opacity: 1; }
 .btn-signout:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(224,57,62,.18); }
 
 .btn-deny {

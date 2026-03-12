@@ -8,84 +8,227 @@
   <title>Authorize Access — CARS SSO</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
+  <style>
+    /* Authorize-specific styles */
+    .auth-card { text-align: center; max-width: 440px; }
+
+    .auth-logo-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; margin-bottom: 20px;
+    }
+    .auth-logo-cars {
+      width: 44px; height: 44px;
+      background: var(--navy);
+      border-radius: 13px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .auth-logo-arrow {
+      color: var(--dim); font-size: 18px; font-weight: 400;
+    }
+    .auth-logo-app {
+      width: 44px; height: 44px;
+      background: var(--accent-l);
+      border: 2px solid rgba(79,110,247,.25);
+      border-radius: 13px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+
+    .app-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent-l);
+      border: 1.5px solid rgba(79,110,247,.22);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px; font-weight: 700; color: var(--accent-d);
+      margin-bottom: 12px;
+    }
+    .app-badge-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .auth-title {
+      font-family: var(--font-head);
+      font-size: 22px; font-weight: 800;
+      color: var(--ink); letter-spacing: -.35px;
+      margin-bottom: 4px;
+    }
+    .auth-subtitle {
+      font-size: 14px; color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .user-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12.5px; font-weight: 600; color: var(--ink-2);
+      margin-bottom: 20px;
+    }
+    .user-chip-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 4px var(--ok);
+    }
+
+    .permission-box {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 4px 0;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+    .permission-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .permission-item:last-child { border-bottom: none; }
+    .permission-icon {
+      font-size: 18px; flex-shrink: 0;
+    }
+    .permission-name {
+      font-size: 13.5px; font-weight: 700; color: var(--ink-2);
+      margin-bottom: 2px;
+    }
+    .permission-desc {
+      font-size: 12px; color: var(--muted);
+    }
+
+    .scope-note {
+      font-size: 12px; color: var(--dim);
+      margin-bottom: 20px;
+    }
+
+    .btn-deny {
+      display: block; width: 100%;
+      padding: 12px 20px;
+      background: transparent;
+      border: 1.5px solid var(--border); border-radius: var(--radius-btn);
+      color: var(--muted);
+      font-family: var(--font); font-size: 14.5px; font-weight: 700;
+      cursor: pointer; text-align: center;
+      transition: border-color .18s, color .18s, background .18s;
+      margin-top: 8px;
+    }
+    .btn-deny:hover {
+      border-color: var(--err-bd); color: var(--err); background: var(--err-bg);
+    }
+    .btn-deny:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(224,57,62,.18); }
+
+    /* Loading overlay */
+    .loading-overlay {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px; padding: 20px 0;
+    }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .65s linear infinite;
+    }
+    .loading-text { font-size: 14px; color: var(--muted); font-weight: 500; }
+
+    /* Error state */
+    #error-ui .status-box { display: block; }
+    #error-ui h1 {
+      font-family: var(--font-head);
+      font-size: 22px; font-weight: 800; color: var(--ink);
+      letter-spacing: -.35px; margin-bottom: 14px;
+    }
+
+    .footer-signed {
+      margin-top: 18px;
+      font-size: 12px; color: var(--dim); text-align: center;
+    }
+    .footer-signed strong { color: var(--muted); font-weight: 600; }
+    .footer-signed a {
+      color: var(--accent); font-weight: 600; text-decoration: none;
+    }
+    .footer-signed a:hover { text-decoration: underline; }
+  </style>
 </head>
 <body class="auth-pending">
-  <div id="particles"></div>
+  <div class="center-layout">
 
-  <div class="card" id="main-card" style="display:none;">
-    <div class="card-glow"></div>
+    <div class="center-card auth-card" id="main-card" style="display:none;">
 
-    <!-- Loading state -->
-    <div id="loading-overlay" class="loading-overlay">
-      <div class="spinner"></div>
-      <p class="loading-text">Verifying request…</p>
-    </div>
-
-    <!-- Consent UI (hidden until loaded) -->
-    <div id="consent-ui" style="display:none; position:relative; z-index:2;">
-      <div class="emblem" aria-hidden="true">
-        <div class="emblem-ring"></div>
-        <div class="emblem-bg">🔗</div>
+      <!-- Loading state -->
+      <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner" aria-hidden="true"></div>
+        <p class="loading-text">Verifying request…</p>
       </div>
 
-      <div class="app-badge" id="app-badge">
-        <div class="app-badge-dot"></div>
-        <span id="app-badge-name">Application</span>
-      </div>
+      <!-- Consent UI -->
+      <div id="consent-ui" style="display:none;">
+        <div class="auth-logo-row">
+          <div class="auth-logo-cars" aria-hidden="true">🚗</div>
+          <div class="auth-logo-arrow" aria-hidden="true">⟷</div>
+          <div class="auth-logo-app" aria-hidden="true">🔗</div>
+        </div>
 
-      <h1 class="heading">Authorize access</h1>
-      <p class="subtitle" id="consent-subtitle">Loading…</p>
+        <div class="app-badge">
+          <div class="app-badge-dot" aria-hidden="true"></div>
+          <span id="app-badge-name">Application</span>
+        </div>
 
-      <div class="user-chip" id="user-chip" style="display:none;">
-        <div class="user-chip-dot"></div>
-        <span id="user-chip-name">user</span>
-      </div>
+        <h1 class="auth-title">Authorize access</h1>
+        <p class="auth-subtitle" id="consent-subtitle">Loading…</p>
 
-      <div id="status-msg" class="status-box" role="alert" aria-live="assertive" aria-atomic="true"></div>
+        <div class="user-chip" id="user-chip" style="display:none;">
+          <div class="user-chip-dot" aria-hidden="true"></div>
+          <span id="user-chip-name">user</span>
+        </div>
 
-      <div class="permission-box" role="list" aria-label="Requested permissions">
-        <div class="permission-item" role="listitem">
-          <div class="permission-icon" aria-hidden="true">👤</div>
-          <div>
-            <div class="permission-name">Your username</div>
-            <div class="permission-desc">Read-only, not your password</div>
+        <div id="status-msg" class="status-box" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+        <div class="permission-box" role="list" aria-label="Requested permissions">
+          <div class="permission-item" role="listitem">
+            <div class="permission-icon" aria-hidden="true">👤</div>
+            <div>
+              <div class="permission-name">Your username</div>
+              <div class="permission-desc">Read-only — not your password</div>
+            </div>
+          </div>
+          <div class="permission-item" role="listitem">
+            <div class="permission-icon" aria-hidden="true">✅</div>
+            <div>
+              <div class="permission-name">Login status</div>
+              <div class="permission-desc">Confirms you're authenticated</div>
+            </div>
           </div>
         </div>
-        <div class="permission-item" role="listitem">
-          <div class="permission-icon" aria-hidden="true">✅</div>
-          <div>
-            <div class="permission-name">Login status</div>
-            <div class="permission-desc">Confirms you're authenticated</div>
-          </div>
+
+        <p class="scope-note">This app cannot access your password, email, or any private data.</p>
+
+        <button id="btn-allow" type="button" class="btn-primary">Allow Access</button>
+        <button id="btn-deny"  type="button" class="btn-deny">Deny</button>
+
+        <div class="footer-signed">
+          Signed in as <strong id="footer-username">—</strong>
+          · <a href="/logout">Sign out</a>
         </div>
       </div>
-      <p class="scope-note">This app cannot access your password, email, or any private data.</p>
 
-      <button id="btn-allow" type="button" class="btn-primary">✓ Allow Access</button>
-      <div class="action-divider"><span>or</span></div>
-      <button id="btn-deny" type="button" class="btn-deny">Deny</button>
+      <!-- Error state -->
+      <div id="error-ui" style="display:none;">
+        <div style="font-size:40px; margin-bottom:14px;" aria-hidden="true">⚠️</div>
+        <h1>Something went wrong</h1>
+        <div id="error-msg" class="status-box danger" role="alert" style="display:block;">
+          Unable to load authorization data
+        </div>
+        <p style="font-size:14px; color:var(--muted);">Please contact the application owner.</p>
+      </div>
 
-      <div class="footer-link" style="margin-top:16px; text-align:center;">
-        <span style="font-size:12px; color:var(--dim);">
-          Signed in as <strong id="footer-username" style="color:var(--ink2);">—</strong>
-          · <a href="/logout" style="font-size:12px; font-weight:500;">Sign out</a>
-        </span>
-      </div>
-    </div>
-
-    <!-- Error state -->
-    <div id="error-ui" style="display:none; position:relative; z-index:2;">
-      <div class="emblem" aria-hidden="true">
-        <div class="emblem-ring"></div>
-        <div class="emblem-bg">⚠️</div>
-      </div>
-      <h1 class="heading">Something went wrong</h1>
-      <div id="error-msg" class="status-box danger" role="alert" style="display:block;">
-        Unable to load authorization data
-      </div>
-      <p class="subtitle" style="margin-top:8px;">Please contact the application owner.</p>
     </div>
   </div>
 

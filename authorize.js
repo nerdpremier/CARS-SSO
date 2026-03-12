@@ -1,5 +1,4 @@
 // authorize.js — CARS SSO OAuth Consent Page
-// Extracted from authorize.html inline script (CSP-compliant)
 'use strict';
 
 let _oauthParams  = {};
@@ -21,10 +20,10 @@ function setSubmitting(on) {
   btnAllow.disabled = on;
   btnDeny.disabled  = on;
   if (on) {
-    btnAllow.textContent = 'Processing...';
+    btnAllow.textContent = 'Processing…';
     btnAllow.classList.add('btn--loading');
   } else {
-    btnAllow.textContent = '✓ Allow Access';
+    btnAllow.textContent = 'Allow Access';
     btnAllow.classList.remove('btn--loading');
   }
 }

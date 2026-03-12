@@ -8,102 +8,109 @@
   <title>Create Account — CARS SSO</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div id="particles"></div>
+  <div class="split-layout">
 
-  <div class="card">
-    <div class="card-glow"></div>
+    <!-- ── Brand panel ── -->
+    <aside class="brand-panel" aria-hidden="true">
+      <div class="brand-glow-a"></div>
+      <div class="brand-glow-b"></div>
 
-    <div class="emblem" aria-hidden="true">
-      <div class="emblem-ring"></div>
-      <div class="emblem-bg">🧑🏻‍💻</div>
-    </div>
-
-    <h1 class="heading">Create account</h1>
-    <p class="subtitle">Join CARS and start building</p>
-
-    <div id="status-box" class="status-box" role="status" aria-live="polite" aria-atomic="true"></div>
-
-    <form id="register-form" novalidate>
-      <div class="field">
-        <label for="username">Username</label>
-        <div class="input-wrap">
-          <input
-            type="text"
-            id="username"
-            name="username"
-            placeholder="Letters and numbers only"
-            autocomplete="username"
-            pattern="[A-Za-z0-9]+"
-            maxlength="32"
-            required
-            aria-required="true"
-            aria-describedby="status-box"
-          >
+      <div class="brand-top">
+        <div class="brand-wordmark">
+          <div class="brand-icon">🚗</div>
+          <span class="brand-name-text">CARS SSO</span>
         </div>
+        <h2 class="brand-headline">Start building<br><em>with CARS.</em></h2>
+        <p class="brand-description">
+          Create your account and gain access to the full CARS ecosystem — APIs, OAuth apps, and secure authentication out of the box.
+        </p>
       </div>
 
-      <div class="field">
-        <label for="email">Email Address</label>
-        <div class="input-wrap">
-          <input
-            type="email"
-            id="email"
-            name="email"
-            placeholder="you@example.com"
-            autocomplete="email"
-            maxlength="254"
-            required
-            aria-required="true"
-            aria-describedby="status-box"
-          >
+      <div class="brand-bottom">
+        <div class="brand-badges">
+          <div class="brand-badge"><div class="badge-dot"></div>Free to start</div>
+          <div class="brand-badge"><div class="badge-dot"></div>Developer API</div>
+          <div class="brand-badge"><div class="badge-dot"></div>Up to 10 apps</div>
         </div>
       </div>
+    </aside>
 
-      <div class="field">
-        <label for="password">Password</label>
-        <div class="input-wrap">
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Create a strong password"
-            autocomplete="new-password"
-            maxlength="128"
-            required
-            aria-required="true"
-            aria-describedby="password-rules status-box"
-          >
+    <!-- ── Form panel ── -->
+    <main class="form-panel">
+      <div class="form-container">
+        <div class="form-card">
+
+          <div class="form-icon" aria-hidden="true">🧑‍💻</div>
+          <h1 class="form-title">Create account</h1>
+          <p class="form-subtitle">Join CARS and start building</p>
+
+          <div id="status-box" class="status-box" role="status" aria-live="polite" aria-atomic="true"></div>
+
+          <form id="register-form" novalidate>
+            <div class="field">
+              <label for="username">Username</label>
+              <div class="input-wrap">
+                <input type="text" id="username" name="username"
+                  placeholder="Letters and numbers only"
+                  autocomplete="username"
+                  pattern="[A-Za-z0-9]+" maxlength="32"
+                  required aria-required="true" aria-describedby="status-box">
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="email">Email Address</label>
+              <div class="input-wrap">
+                <input type="email" id="email" name="email"
+                  placeholder="you@example.com"
+                  autocomplete="email" maxlength="254"
+                  required aria-required="true" aria-describedby="status-box">
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="password">Password</label>
+              <div class="input-wrap">
+                <input type="password" id="password" name="password"
+                  placeholder="Create a strong password"
+                  autocomplete="new-password" maxlength="128"
+                  required aria-required="true" aria-describedby="password-rules status-box">
+              </div>
+            </div>
+
+            <ul id="password-rules" class="password-rules" aria-label="Password requirements" aria-live="polite">
+              <li class="rule" id="rule-length"  role="listitem" aria-label="Not met: At least 8 characters">
+                <span class="rule-icon" aria-hidden="true">✗</span> 8+ characters
+              </li>
+              <li class="rule" id="rule-upper"   role="listitem" aria-label="Not met: Uppercase letter">
+                <span class="rule-icon" aria-hidden="true">✗</span> Uppercase (A–Z)
+              </li>
+              <li class="rule" id="rule-lower"   role="listitem" aria-label="Not met: Lowercase letter">
+                <span class="rule-icon" aria-hidden="true">✗</span> Lowercase (a–z)
+              </li>
+              <li class="rule" id="rule-number"  role="listitem" aria-label="Not met: Number">
+                <span class="rule-icon" aria-hidden="true">✗</span> Number (0–9)
+              </li>
+              <li class="rule" id="rule-special" role="listitem" aria-label="Not met: Symbol">
+                <span class="rule-icon" aria-hidden="true">✗</span> Symbol (@$!%*?&amp;)
+              </li>
+            </ul>
+
+            <button type="submit" id="register-btn" class="btn-primary">Create Account</button>
+          </form>
+
+          <div class="footer-link" style="text-align:center;">
+            Already have an account? <a href="/login">Sign in</a>
+          </div>
+
         </div>
       </div>
+    </main>
 
-      <ul id="password-rules" class="password-rules" aria-label="Password requirements" aria-live="polite">
-        <li class="rule" id="rule-length"  role="listitem" aria-label="Not met: At least 8 characters">
-          <span class="rule-icon" aria-hidden="true">✗</span> 8+ characters
-        </li>
-        <li class="rule" id="rule-upper"   role="listitem" aria-label="Not met: Uppercase letter">
-          <span class="rule-icon" aria-hidden="true">✗</span> Uppercase (A–Z)
-        </li>
-        <li class="rule" id="rule-lower"   role="listitem" aria-label="Not met: Lowercase letter">
-          <span class="rule-icon" aria-hidden="true">✗</span> Lowercase (a–z)
-        </li>
-        <li class="rule" id="rule-number"  role="listitem" aria-label="Not met: Number">
-          <span class="rule-icon" aria-hidden="true">✗</span> Number (0–9)
-        </li>
-        <li class="rule" id="rule-special" role="listitem" aria-label="Not met: Symbol">
-          <span class="rule-icon" aria-hidden="true">✗</span> Symbol (@$!%*?&amp;)
-        </li>
-      </ul>
-
-      <button type="submit" id="register-btn" class="btn-primary">Create Account</button>
-    </form>
-
-    <div class="footer-link" style="text-align:center;">
-      Already have an account? <a href="/login">Sign in</a>
-    </div>
   </div>
 
   <script src="/effects.js"></script>

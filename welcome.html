@@ -8,89 +8,105 @@
   <title>Welcome — CARS SSO</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
   <style>
-    /* Welcome-specific overrides */
+    /* Welcome-specific styles */
+    .welcome-success-icon {
+      width: 64px; height: 64px;
+      background: var(--ok-bg);
+      border: 2px solid var(--ok-bd);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 20px;
+    }
+
     .session-badge {
       display: inline-flex; align-items: center; gap: 7px;
       background: var(--ok-bg);
       border: 1.5px solid var(--ok-bd);
       border-radius: 20px;
-      padding: 4px 13px 4px 9px;
-      font-size: 12px; font-weight: 700; color: #065F46;
-      margin-bottom: 22px;
-      animation: slideUp .6s cubic-bezier(.16,1,.3,1) .28s both;
+      padding: 5px 12px;
+      font-size: 12.5px; font-weight: 700; color: #065F46;
+      margin-bottom: 14px;
     }
     .session-badge-dot {
-      width: 7px; height: 7px; border-radius: 50%;
+      width: 6px; height: 6px; border-radius: 50%;
       background: var(--ok);
-      box-shadow: 0 0 6px var(--ok);
-      animation: dotBreathe 2s ease-in-out infinite;
+      box-shadow: 0 0 5px var(--ok);
+      animation: dotPulse 2s ease-in-out infinite;
     }
-    @keyframes dotBreathe {
-      0%,100% { opacity: 1; transform: scale(1); }
-      50%     { opacity: .6; transform: scale(.8); }
+    @keyframes dotPulse {
+      0%,100% { opacity: 1; } 50% { opacity: .45; }
     }
+
     .welcome-name {
-      font-size: 13.5px; color: var(--muted);
+      font-size: 14px; color: var(--muted);
       margin-bottom: 24px;
-      animation: slideUp .6s cubic-bezier(.16,1,.3,1) .38s both;
     }
     .welcome-name strong {
       font-weight: 800;
-      background: linear-gradient(135deg, var(--c-500), var(--signal));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--accent);
     }
+
+    .welcome-divider {
+      display: flex; align-items: center; gap: 10px;
+      margin: 4px 0 16px;
+      color: var(--dim); font-size: 11.5px; font-weight: 600;
+      letter-spacing: .3px; text-transform: uppercase;
+    }
+    .welcome-divider::before,
+    .welcome-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
     .btn-signout {
-      width: 100%; padding: 13px 22px;
-      border: 1.5px solid var(--border-input);
-      border-radius: var(--radius-btn);
-      background: #ffffff;
-      color: var(--muted);
+      display: block; width: 100%;
+      padding: 12px 20px;
+      border: 1.5px solid var(--border); border-radius: var(--radius-btn);
+      background: var(--white); color: var(--muted);
       font-family: var(--font); font-size: 14.5px; font-weight: 700;
-      cursor: pointer; margin-top: 0;
-      transition: border-color .2s, color .2s, background .2s, box-shadow .2s;
-      animation: slideUp .6s cubic-bezier(.16,1,.3,1) .44s both;
+      cursor: pointer; text-align: center;
+      transition: border-color .18s, color .18s, background .18s;
+      margin-top: 10px;
     }
     .btn-signout:hover {
       border-color: var(--err-bd); color: var(--err); background: var(--err-bg);
-      box-shadow: 0 2px 10px rgba(220,38,38,.08);
     }
-    .btn-signout:focus-visible { outline: none; box-shadow: 0 0 0 3.5px rgba(220,38,38,.2); }
+    .btn-signout:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(224,57,62,.18); }
+
+    .center-card { text-align: center; }
   </style>
 </head>
 <body class="auth-pending">
-  <div id="particles"></div>
+  <div class="center-layout">
+    <div class="center-card">
 
-  <div class="card">
-    <div class="card-glow"></div>
+      <div class="welcome-success-icon" aria-hidden="true">✓</div>
 
-    <div class="emblem emblem--success" aria-hidden="true">
-      <div class="emblem-ring"></div>
-      <div class="emblem-bg">✓</div>
+      <h1 style="font-family:var(--font-head); font-size:24px; font-weight:800; color:var(--ink); letter-spacing:-.4px; margin-bottom:6px;">
+        Access Granted
+      </h1>
+
+      <div class="session-badge">
+        <div class="session-badge-dot" aria-hidden="true"></div>
+        <span>Session active</span>
+      </div>
+
+      <p class="welcome-name" id="welcome-message" aria-label="Loading user data">
+        Signed in as <strong id="user-display">…</strong>
+      </p>
+
+      <div class="welcome-divider"><span>Quick actions</span></div>
+
+      <button type="button" id="dev-portal-btn" class="btn-secondary" style="margin-top:0;">
+        🔗 Developer Portal
+      </button>
+
+      <button type="button" id="logout-btn" class="btn-signout">Sign Out</button>
+
     </div>
-
-    <h1 class="heading">Access granted</h1>
-
-    <div class="session-badge">
-      <div class="session-badge-dot"></div>
-      <span>Session active</span>
-    </div>
-
-    <p class="welcome-name" id="welcome-message" aria-label="Loading user data">
-      Signed in as <strong id="user-display"></strong>
-    </p>
-
-    <div class="divider"><span>Actions</span></div>
-
-    <button type="button" id="dev-portal-btn" class="btn-secondary">
-      🔗 Developer Portal
-    </button>
-
-    <button type="button" id="logout-btn" class="btn-signout">Sign Out</button>
   </div>
 
   <script src="/effects.js"></script>

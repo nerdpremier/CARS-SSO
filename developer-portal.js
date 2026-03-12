@@ -49,35 +49,40 @@ async function loadApps() {
       list.innerHTML = `
         <div class="apps-empty">
           <div class="apps-empty-icon">🔌</div>
-          <div class="apps-empty-text">ยังไม่มี App</div>
-          <div class="apps-empty-text" style="font-weight:400; margin-top:4px;">กรอกฟอร์มด้านบนเพื่อสร้าง App แรกของคุณ</div>
+          <div class="apps-empty-title">No apps yet</div>
+          <div class="apps-empty-sub">Fill in the form above to create your first app.</div>
         </div>`;
       return;
     }
 
-    list.innerHTML = apps.map((app, i) => `
-      <div class="app-card" data-client-id="${esc(app.client_id)}" data-app-name="${esc(app.name)}">
-        <div class="app-card-header">
+    list.innerHTML = apps.map((app) => `
+      <div class="app-card" role="listitem"
+           data-client-id="${esc(app.client_id)}"
+           data-app-name="${esc(app.name)}">
+        <div class="app-card-main">
+          <div class="app-name">${esc(app.name)}</div>
+          <div class="app-id">${esc(app.client_id)}</div>
           <div>
-            <div class="app-name">${esc(app.name)}</div>
-            <div class="app-id">${esc(app.client_id)}</div>
+            ${(app.redirect_uris || []).map(u => `<span class="uri-chip" title="${esc(u)}">${esc(u)}</span>`).join('')}
           </div>
+          <div class="app-date">Created ${formatDate(app.created_at)}</div>
         </div>
-        <div class="app-uris">
-          ${(app.redirect_uris || []).map(u => `<span class="uri-chip">${esc(u)}</span>`).join('')}
-        </div>
-        <div class="app-footer">
-          <div class="app-date">สร้างเมื่อ ${formatDate(app.created_at)}</div>
-          <button class="btn-rotate" data-action="rotate" data-client-id="${esc(app.client_id)}" data-app-name="${esc(app.name)}">
+        <div class="app-card-actions">
+          <button class="btn-rotate" type="button"
+                  data-action="rotate"
+                  data-client-id="${esc(app.client_id)}"
+                  data-app-name="${esc(app.name)}">
             🔄 Rotate Secret
           </button>
-          <button class="btn-delete" data-action="delete" data-client-id="${esc(app.client_id)}" data-app-name="${esc(app.name)}">
-            ลบ
+          <button class="btn-delete" type="button"
+                  data-action="delete"
+                  data-client-id="${esc(app.client_id)}"
+                  data-app-name="${esc(app.name)}">
+            Delete
           </button>
         </div>
       </div>`).join('');
 
-    // event delegation สำหรับปุ่ม rotate / delete ใน app cards
     list.querySelectorAll('[data-action="rotate"]').forEach(btn => {
       btn.addEventListener('click', () => askRotate(btn.dataset.clientId, btn.dataset.appName));
     });
@@ -86,8 +91,7 @@ async function loadApps() {
     });
 
   } catch {
-    list.innerHTML = `<div class="apps-load-error">
-      โหลดข้อมูลไม่สำเร็จ กรุณา refresh หน้า</div>`;
+    list.innerHTML = `<div class="apps-load-error">Failed to load apps. Please refresh the page.</div>`;
     count.textContent = '— apps';
   }
 }
@@ -101,23 +105,23 @@ async function createApp() {
   const resultBox = document.getElementById('result-box');
 
   resultBox.style.display = 'none';
-  status.className   = '';
+  status.className     = '';
   status.style.display = 'none';
 
-  if (!name) return showCreateError('กรุณาใส่ชื่อ App');
-  if (!uri)  return showCreateError('กรุณาใส่ Callback URL');
+  if (!name) return showCreateError('Please enter an app name.');
+  if (!uri)  return showCreateError('Please enter a Callback URL.');
 
   try {
     const parsed      = new URL(uri);
     const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
     if (parsed.protocol !== 'https:' && !isLocalhost)
-      return showCreateError('Callback URL ต้องเป็น https:// (หรือ localhost สำหรับ dev)');
+      return showCreateError('Callback URL must use https:// (or localhost for dev).');
   } catch {
-    return showCreateError('Callback URL format ไม่ถูกต้อง');
+    return showCreateError('Invalid Callback URL format.');
   }
 
   btn.disabled    = true;
-  btn.textContent = 'กำลังสร้าง...';
+  btn.textContent = 'Creating…';
 
   try {
     const res = await fetch('/api/oauth/clients', {
@@ -128,7 +132,7 @@ async function createApp() {
     });
 
     const data = await res.json();
-    if (!res.ok) { showCreateError(data.error || 'เกิดข้อผิดพลาด กรุณาลองใหม่'); return; }
+    if (!res.ok) { showCreateError(data.error || 'An error occurred. Please try again.'); return; }
 
     document.getElementById('res-client-id').textContent     = data.client_id;
     document.getElementById('res-client-secret').textContent = data.client_secret;
@@ -139,10 +143,10 @@ async function createApp() {
 
     loadApps();
   } catch {
-    showCreateError('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่');
+    showCreateError('Unable to connect to server. Please try again.');
   } finally {
     btn.disabled    = false;
-    btn.textContent = 'สร้าง';
+    btn.textContent = 'Create App';
   }
 }
 
@@ -152,12 +156,12 @@ function showCreateError(msg) {
   el.className     = 'danger';
   el.style.display = 'block';
   document.getElementById('btn-create').disabled    = false;
-  document.getElementById('btn-create').textContent = 'สร้าง';
+  document.getElementById('btn-create').textContent = 'Create App';
 }
 
 // ── Rotate Secret ───────────────────────────────────────────────
 function askRotate(clientId, appName) {
-  if (!confirm(`⚠️ Rotate client_secret ของ "${appName}" ?\n\nToken เก่าทั้งหมดจะถูก revoke ทันที\nคุณจะต้องอัปเดต secret ในแอปพลิเคชันของคุณด้วย`)) return;
+  if (!confirm(`Rotate the client_secret for "${appName}"?\n\nAll existing tokens will be revoked immediately. You will need to update the secret in your application.`)) return;
   doRotate(clientId);
 }
 
@@ -170,12 +174,12 @@ async function doRotate(clientId) {
       body: JSON.stringify({ client_id: clientId })
     });
     const data = await res.json();
-    if (!res.ok) { alert(data.error || 'Rotate ไม่สำเร็จ'); return; }
+    if (!res.ok) { alert(data.error || 'Rotation failed. Please try again.'); return; }
 
-    alert(`✅ Rotate สำเร็จ!\n\nClient ID: ${data.client_id}\nClient Secret ใหม่:\n${data.client_secret}\n\n⚠️ คัดลอกและบันทึกไว้ทันที จะไม่สามารถดูซ้ำได้`);
+    alert(`✅ Secret rotated!\n\nClient ID: ${data.client_id}\nNew Client Secret:\n${data.client_secret}\n\n⚠️ Copy and save this now — it will not be shown again.`);
     loadApps();
   } catch {
-    alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+    alert('Unable to connect to server. Please try again.');
   }
 }
 
@@ -197,7 +201,7 @@ async function confirmDelete() {
 
   const btn = document.getElementById('btn-confirm-delete');
   btn.disabled    = true;
-  btn.textContent = 'กำลังลบ...';
+  btn.textContent = 'Deleting…';
 
   try {
     const res = await fetch('/api/oauth/clients', {
@@ -207,15 +211,15 @@ async function confirmDelete() {
       body: JSON.stringify({ client_id: pendingDeleteId })
     });
 
-    if (!res.ok) { const d = await res.json(); alert(d.error || 'ลบไม่สำเร็จ กรุณาลองใหม่'); return; }
+    if (!res.ok) { const d = await res.json(); alert(d.error || 'Delete failed. Please try again.'); return; }
 
     closeConfirm();
     loadApps();
   } catch {
-    alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+    alert('Unable to connect to server. Please try again.');
   } finally {
     btn.disabled    = false;
-    btn.textContent = 'ลบเลย';
+    btn.textContent = 'Delete';
   }
 }
 
@@ -235,45 +239,49 @@ function esc(str) {
 
 function formatDate(iso) {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+  return new Date(iso).toLocaleDateString('en-US', {
+    day: 'numeric', month: 'short', year: 'numeric'
+  });
 }
 
 async function copyText(elemId, btn) {
   const text = document.getElementById(elemId).textContent;
   try {
     await navigator.clipboard.writeText(text);
-    btn.textContent = '✅';
-    setTimeout(() => { btn.textContent = '📋'; }, 1500);
+    btn.textContent = '✅ Copied';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
   } catch {
-    btn.textContent = '❌';
-    setTimeout(() => { btn.textContent = '📋'; }, 1500);
+    btn.textContent = '❌ Failed';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
   }
 }
 
 // ── DOMContentLoaded ───────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Enter กด create
   ['input-name', 'input-uri'].forEach(id => {
     document.getElementById(id)?.addEventListener('keydown', e => {
       if (e.key === 'Enter') createApp();
     });
   });
 
-  // ปุ่ม create
-  document.getElementById('btn-create')?.addEventListener('click', createApp);
+  document.getElementById('btn-create')
+    ?.addEventListener('click', createApp);
 
-  // ปุ่ม copy credentials
-  document.getElementById('copy-client-id')    ?.addEventListener('click', function() { copyText('res-client-id', this); });
-  document.getElementById('copy-client-secret')?.addEventListener('click', function() { copyText('res-client-secret', this); });
+  document.getElementById('copy-client-id')
+    ?.addEventListener('click', function() { copyText('res-client-id', this); });
 
-  // confirm overlay buttons
-  document.getElementById('btn-cancel')        ?.addEventListener('click', closeConfirm);
-  document.getElementById('btn-confirm-delete')?.addEventListener('click', confirmDelete);
+  document.getElementById('copy-client-secret')
+    ?.addEventListener('click', function() { copyText('res-client-secret', this); });
 
-  // logout
-  document.getElementById('btn-logout')?.addEventListener('click', logout);
+  document.getElementById('btn-cancel')
+    ?.addEventListener('click', closeConfirm);
 
-  // ปิด overlay เมื่อกด Escape
+  document.getElementById('btn-confirm-delete')
+    ?.addEventListener('click', confirmDelete);
+
+  document.getElementById('btn-logout')
+    ?.addEventListener('click', logout);
+
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeConfirm(); });
 });
 

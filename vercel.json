@@ -12,7 +12,7 @@
     { "source": "/api/session",     "destination": "/api/session.js" },
     { "source": "/api/logout",      "destination": "/api/logout.js" },
     { "source": "/api/csrf",        "destination": "/api/csrf.js" },
-    { "source": "/api/cleanup",     "destination": "/api/cleanup.js" },
+    { "source": "/api/cleanup",     "destination": "/api/logout.js" },
 
     { "source": "/api/oauth/:path*", "destination": "/api/oauth.js" },
 

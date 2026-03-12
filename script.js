@@ -2,6 +2,17 @@
 // CARS SSO — Core Frontend Logic
 // CSP-safe: no element.style assignments.
 // Show/hide via element.hidden (sets [hidden] attr, not inline style).
+//
+// [FIX-REDIRECT] แยก ?next= (same-origin, สำหรับ OAuth consent page)
+//   ออกจาก ?redirect_back= (third-party SSO token redirect)
+//
+//   เดิม: script ส่งทั้งสองเป็น redirect_back ไปยัง auth API
+//         validateRedirectBack() ตรวจกับ oauth_clients.redirect_uris
+//         /oauth/authorize?... ไม่เคยอยู่ใน registered URIs
+//         → redirectUrl = null → user ไป /welcome แทนกลับ consent page
+//
+//   แก้:  ?next= → หลัง login สำเร็จ redirect ฝั่ง frontend โดยตรง
+//         ?redirect_back= → ส่งไป auth API เพื่อสร้าง SSO token เท่านั้น
 // ==========================================
 
 let _submitting = false;
@@ -59,13 +70,10 @@ async function secureFetch(url, options = {}, timeoutMs = 15000) {
 }
 
 // ── UI Helpers ───────────────────────────────────────────────
-// CSP-safe: element.hidden sets [hidden] attribute, not an inline style.
-// CSS in style.css uses :not([hidden]) selectors to set correct display value.
 function updateStatus(type, msg) {
     const box = document.getElementById('status-box');
     if (!box) return;
     box.className = 'status-box';
-    // Remove hidden to make it visible; CSS class controls display type
     box.hidden = false;
     if (type === 'danger')       box.classList.add('danger');
     else if (type === 'success') box.classList.add('success');
@@ -137,7 +145,7 @@ async function handleRegister() {
             if (data.email_verification) {
                 updateStatus('success','✅ Account created! Check your email to verify before signing in.');
                 const form = document.getElementById('register-form');
-                if (form) form.hidden = true;   // CSP-safe: sets [hidden] attr
+                if (form) form.hidden = true;
             } else {
                 updateStatus('success','Account created! Redirecting…');
                 setTimeout(()=>window.location.href='/login',1500);
@@ -154,7 +162,13 @@ async function preLoginCheck() {
     const password = document.getElementById('password')?.value;
     const remember = document.getElementById('remember-device')?.checked;
     const sp = new URLSearchParams(window.location.search);
-    const redirect_back = sp.get('next')||sp.get('redirect_back');
+
+    // [FIX-REDIRECT] แยก 2 ประเภทออกจากกัน:
+    //   nextUrl       = same-origin URL เช่น /oauth/authorize?... (redirect หลัง login ฝั่ง frontend)
+    //   redirect_back = registered third-party callback URL (สำหรับ SSO token creation ใน auth API)
+    const nextUrl       = sp.get('next') || null;
+    const redirect_back = sp.get('redirect_back') || null;
+
     if (!username||!password) return updateStatus('danger','Please enter your username and password.');
     updateStatus('loading','Verifying your credentials…');
     try {
@@ -168,8 +182,15 @@ async function preLoginCheck() {
         const logIdNum = Number(riskData.logId);
         if (!Number.isInteger(logIdNum)||logIdNum<=0) return updateStatus('danger','Incorrect username or password.');
         const safeLogId = String(logIdNum);
-        const authRes  = await secureFetch('/api/auth',{method:'POST',body:JSON.stringify({action:'login',username,password,fingerprint,logId:safeLogId,remember,redirect_back})});
+
+        // [FIX-REDIRECT] ส่งเฉพาะ redirect_back (third-party SSO) ไปยัง auth API
+        // ไม่ส่ง nextUrl เพราะ validateRedirectBack() จะ reject URL ที่ไม่ใช่ registered redirect_uri
+        const authBody = {action:'login',username,password,fingerprint,logId:safeLogId,remember};
+        if (redirect_back) authBody.redirect_back = redirect_back;
+
+        const authRes  = await secureFetch('/api/auth',{method:'POST',body:JSON.stringify(authBody)});
         const authData = await authRes.json();
+
         if (authRes.ok) {
             if (authData.mfa_required) {
                 updateStatus('success', authData.email_pending
@@ -179,11 +200,15 @@ async function preLoginCheck() {
                 sessionStorage.setItem('mfa_username',username);
                 sessionStorage.setItem('mfa_remember',String(remember));
                 sessionStorage.setItem('mfa_fingerprint',fingerprint);
-                if (redirect_back) sessionStorage.setItem('mfa_redirect_back',redirect_back);
+                // [FIX-REDIRECT] บันทึกทั้งสอง URL ใน sessionStorage สำหรับ MFA path
+                if (redirect_back) sessionStorage.setItem('mfa_redirect_back', redirect_back);
+                if (nextUrl)       sessionStorage.setItem('mfa_next_url', nextUrl);
                 setTimeout(()=>window.location.href='/mfa',1500);
             } else {
                 updateStatus('success','Signed in successfully. Redirecting…');
-                setTimeout(()=>window.location.href=authData.redirectUrl||'/welcome',1000);
+                // [FIX-REDIRECT] ลำดับ priority: SSO redirect → same-origin next → welcome
+                const dest = authData.redirectUrl || nextUrl || '/welcome';
+                setTimeout(()=>window.location.href=dest,1000);
             }
         } else {
             if (authData.email_not_verified) updateStatus('warning','📧 Please verify your email before signing in. Check your inbox (or spam folder).');
@@ -202,15 +227,25 @@ async function verifyMFA() {
     const username    = sessionStorage.getItem('mfa_username');
     const fingerprint = sessionStorage.getItem('mfa_fingerprint');
     const redirect_back = sessionStorage.getItem('mfa_redirect_back');
+    // [FIX-REDIRECT] อ่าน mfa_next_url สำหรับ same-origin redirect หลัง MFA
+    const nextUrl     = sessionStorage.getItem('mfa_next_url');
+
     if (!code||!logId||!username) return updateStatus('danger','Session data missing. Please sign in again.');
     updateStatus('loading','Verifying your code…');
     try {
-        const res = await secureFetch('/api/mfa',{method:'POST',body:JSON.stringify({action:'verify',logId,code,remember:remember==='true',username,fingerprint,redirect_back})});
+        const body = {action:'verify',logId,code,remember:remember==='true',username,fingerprint};
+        if (redirect_back) body.redirect_back = redirect_back;
+
+        const res = await secureFetch('/api/mfa',{method:'POST',body:JSON.stringify(body)});
         if (res.ok) {
             const data = await res.json();
-            ['mfa_logId','mfa_username','mfa_remember','mfa_fingerprint','mfa_redirect_back'].forEach(k=>sessionStorage.removeItem(k));
+            // ล้าง sessionStorage ทั้งหมด
+            ['mfa_logId','mfa_username','mfa_remember','mfa_fingerprint',
+             'mfa_redirect_back','mfa_next_url'].forEach(k=>sessionStorage.removeItem(k));
             updateStatus('success','Identity verified. Redirecting…');
-            setTimeout(()=>window.location.href=data.redirectUrl||'/welcome',1000);
+            // [FIX-REDIRECT] ลำดับ priority: SSO redirect → same-origin next → welcome
+            const dest = data.redirectUrl || nextUrl || '/welcome';
+            setTimeout(()=>window.location.href=dest,1000);
         } else {
             const data = await res.json();
             updateStatus('danger', data.error||'Invalid code. Please try again.');

@@ -19,7 +19,7 @@
 
 /* ── Layout ──────────────────────────────────────────────── */
 body {
-  background: var(--bg);
+  background: var(--bg-page);
   align-items: flex-start;
   padding: 0;
 }
@@ -126,9 +126,12 @@ body {
 /* ── Create Form ─────────────────────────────────────────── */
 .form-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  gap: 14px; align-items: end;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 14px;
+  align-items: end;
 }
+/* Prevent overflow so both input cols stay equal */
+.form-row .form-col { min-width: 0; overflow: hidden; }
 @media (max-width: 680px) { .form-row { grid-template-columns: 1fr; } }
 
 .form-col { display: flex; flex-direction: column; gap: 6px; }
@@ -266,7 +269,7 @@ body {
   font-size: 10.5px; font-weight: 700;
   font-family: var(--font-mono);
   color: var(--ink-3);
-  background: var(--bg);
+  background: var(--bg-page);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 2px 8px;

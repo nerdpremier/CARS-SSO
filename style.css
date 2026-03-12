@@ -11,7 +11,8 @@
   --navy:        #0C1425;
   --navy-2:      #1A2744;
   --navy-3:      #2D3F66;
-  --bg:          #EEF2FB;
+  --bg:          #EBF0FA;   /* input / surface bg */
+  --bg-page:     #C2D3EE;   /* page/body background */
   --white:       #FFFFFF;
   --ink:         #0C1425;
   --ink-2:       #1E2D4A;
@@ -54,8 +55,8 @@
   --gold-bd:     rgba(79,110,247,0.22);
   --surface:     var(--white);
   --surface-2:   var(--bg);
-  --surface-3:   #E8EDF6;
-  --bg-2:        #E8EDF6;
+  --surface-3:   #D0DCF2;
+  --bg-2:        #D0DCF2;
   --ink-3:       var(--muted);
   --border:      #DDE3EE;
   --border-act:  rgba(79,110,247,0.5);
@@ -70,7 +71,7 @@ html { height: 100%; }
 body {
   font-family: var(--font);
   color: var(--ink);
-  background: var(--bg);
+  background: var(--bg-page);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

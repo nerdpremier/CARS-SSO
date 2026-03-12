@@ -24,8 +24,8 @@
     /* ── Grid config ─────────────────────────────────────── */
     var CELL   = 44;    // tile size px
     var GAP    = 1.5;   // gap between tiles
-    var R_NEAR = 90;    // full-brightness radius
-    var R_FAR  = 210;   // falloff edge radius
+    var R_NEAR = 40;    // full-brightness radius
+    var R_FAR  = 110;   // falloff edge radius
     var COLS, ROWS;
     var tiles  = [];    // brightness 0..1 per tile
 

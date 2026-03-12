@@ -260,7 +260,7 @@ export default async function handler(req, res) {
                 const baseUrl     = process.env.BASE_URL;
                 const verifyLink  = `${baseUrl}/api/auth?action=verify-email&token=${rawVerifyToken}`;
                 mailTransporter.sendMail({
-                    from:    '"CARS SSO" <no-reply@system.com>',
+                    from:    `"CARS SSO" <${process.env.EMAIL_USER}>`,
                     to:      emailNormalized,
                     subject: '✅ Verify your email — CARS SSO',
                     html:    `<h2>Welcome, ${username}!</h2>
@@ -416,7 +416,7 @@ export default async function handler(req, res) {
                     let emailSent = false;
                     try {
                         await mailTransporter.sendMail({
-                            from:    '"Security System" <no-reply@system.com>',
+                            from:    `"Security System" <${process.env.EMAIL_USER}>`,
                             to:      user.email,
                             subject: '🔒 Your verification code (MFA)',
                             html:    `<h2>Your code is: <b style="color:blue;">${mfaCode}</b></h2><p>This code expires in 5 minutes.</p>`

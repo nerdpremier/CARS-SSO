@@ -9,8 +9,8 @@
 // vercel.json:
 //   { "source": "/api/password", "destination": "/api/password.js" }
 // ============================================================
-import forgotHandler from './forgot-password.js';
-import resetHandler  from './reset-password.js';
+import forgotHandler from '../lib/forgot-password.js';
+import resetHandler  from '../lib/reset-password.js';
 import { setSecurityHeaders } from '../lib/response-utils.js';
 
 export default async function handler(req, res) {

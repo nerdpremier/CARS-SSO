@@ -9,8 +9,8 @@
 // vercel.json:
 //   { "source": "/api/mfa", "destination": "/api/mfa.js" }
 // ============================================================
-import verifyHandler from './verify-mfa.js';
-import resendHandler from './resend-mfa.js';
+import verifyHandler from '../lib/verify-mfa.js';
+import resendHandler from '../lib/resend-mfa.js';
 import { setSecurityHeaders } from '../lib/response-utils.js';
 
 export default async function handler(req, res) {

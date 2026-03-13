@@ -10,6 +10,7 @@
     { "source": "/api/auth",        "destination": "/api/auth.js" },
     { "source": "/api/assess",      "destination": "/api/assess.js" },
     { "source": "/api/session",     "destination": "/api/session.js" },
+    { "source": "/api/session-risk","destination": "/api/session-risk.js" },
     { "source": "/api/logout",      "destination": "/api/logout.js" },
     { "source": "/api/csrf",        "destination": "/api/csrf.js" },
     { "source": "/api/cleanup",     "destination": "/api/logout.js" },

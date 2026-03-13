@@ -23,6 +23,7 @@ import { checkRateLimit }   from '../lib/rate-limit.js';
 import { getClientIp }      from '../lib/ip-utils.js';
 import { LOGID_TTL_MINUTES } from '../lib/constants.js';
 import { validateCsrfToken } from '../lib/csrf-utils.js';
+import { fetchBehaviorScore, mergeScores } from '../lib/risk-utils.js';
 import {
     setSecurityHeaders, auditLog,
     USER_REGEX, SAFE_STRING_REGEX,
@@ -62,7 +63,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Invalid request data' });
         }
 
-        const { username, device, fingerprint } = req.body;
+        const { username, device, fingerprint, behavior } = req.body;
 
         if (typeof username !== 'string' || !username || username.length > 32) {
             return res.status(400).json({ error: 'Invalid request data' });
@@ -125,12 +126,18 @@ export default async function handler(req, res) {
             const fp_match       = deviceRes.rows.length > 0;
             const currentAttempt = Number(countRes.rows[0].recent_fails) + 1;
 
-            // ── Scoring logic ─────────────────────────────────
+            // ── Rule-based score (เดิม) ───────────────────────
             // baseline 0.1 → +0.4 (device ใหม่) → +0.3 (fail > 3) → 1.0 (fail >= 5)
-            let score = 0.1;
-            if (!fp_match)           score += 0.4;
-            if (currentAttempt > 3)  score += 0.3;
-            if (currentAttempt >= 5) score  = 1.0;
+            let ruleScore = 0.1;
+            if (!fp_match)           ruleScore += 0.4;
+            if (currentAttempt > 3)  ruleScore += 0.3;
+            if (currentAttempt >= 5) ruleScore  = 1.0;
+
+            // ── Behavioral score (Isolation Forest) ──────────
+            // เรียก Risk Engine แบบ parallel กับ rule calculation ที่ทำไปแล้ว
+            // null = engine unavailable → mergeScores จะใช้ ruleScore เดิม
+            const behaviorScore = await fetchBehaviorScore(behavior ?? null);
+            const score = mergeScores(ruleScore, behaviorScore);
 
             const level = score >= 0.7 ? 'HIGH' : (score >= 0.4 ? 'MEDIUM' : 'LOW');
 
@@ -138,10 +145,10 @@ export default async function handler(req, res) {
             let insertedId;
             try {
                 const insertRes = await client.query(
-                    `INSERT INTO login_risks (username, device, fingerprint, risk_level)
-                     VALUES ($1, $2, $3, $4)
+                    `INSERT INTO login_risks (username, device, fingerprint, risk_level, risk_score_normalized)
+                     VALUES ($1, $2, $3, $4, $5)
                      RETURNING id`,
-                    [username, device, fingerprint, level]
+                    [username, device, fingerprint, level, parseFloat(score.toFixed(4))]
                 );
                 insertedId = insertRes.rows[0]?.id;
                 await client.query('COMMIT');
@@ -157,13 +164,11 @@ export default async function handler(req, res) {
             }
 
             if (level === 'HIGH') {
-                // HIGH: คืน logId: null เสมอ — ไม่ log insertedId เพื่อไม่ leak ID จริงผ่าน log
-                // (log aggregator อาจ accessible โดย parties ที่ไม่ควรเห็น session ID)
-                auditLog('ASSESS_HIGH_RISK', { username, ip, score });
+                auditLog('ASSESS_HIGH_RISK', { username, ip, score, behaviorScore });
                 return res.status(200).json({ risk_level: 'HIGH', logId: null });
             }
 
-            auditLog('ASSESS_COMPLETE', { username, ip, risk_level: level, logId: insertedId });
+            auditLog('ASSESS_COMPLETE', { username, ip, risk_level: level, logId: insertedId, score, behaviorScore });
             return res.status(200).json({ risk_level: level, logId: insertedId });
 
         } catch (err) {

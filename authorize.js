@@ -12,6 +12,18 @@
 let _oauthParams  = {};
 let _isSubmitting = false;
 
+// safeRedirect: ตรวจ scheme ก่อน window.location.replace()
+// data.redirect_url มาจาก server ซึ่งตรวจ registered URI แล้ว
+// แต่ defense-in-depth: client ต้องตรวจเองด้วยในกรณีที่ server response ถูก tamper
+// อนุญาตเฉพาะ https: และ http: (localhost dev) — ป้องกัน javascript: / data: / file: scheme
+function safeRedirect(url) {
+  if (typeof url !== 'string') return;
+  let parsed;
+  try { parsed = new URL(url); } catch { return; }
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return;
+  window.location.replace(url);
+}
+
 // ── CSRF ──────────────────────────────────────────────────────
 // handleAllow ส่ง POST ไป /api/oauth/authorize ต้องแนบ CSRF token
 // ใช้ pattern เดียวกับ script.js (double-submit cookie)
@@ -182,7 +194,7 @@ async function handleAllow() {
         showStatus(data?.error || 'An error occurred. Please try again.');
         setSubmitting(false); _isSubmitting = false; return;
       }
-      window.location.replace(data.redirect_url);
+      safeRedirect(data.redirect_url);
       return;
     }
 
@@ -196,7 +208,7 @@ async function handleAllow() {
       _isSubmitting = false;
       return;
     }
-    window.location.replace(data.redirect_url);
+    safeRedirect(data.redirect_url);
   } catch {
     showStatus('Unable to connect to server. Please try again.');
     setSubmitting(false);
@@ -241,7 +253,7 @@ async function handleDeny() {
         showError(data?.error || 'An error occurred.');
         setSubmitting(false); _isSubmitting = false; return;
       }
-      window.location.replace(data.redirect_url);
+      safeRedirect(data.redirect_url);
       return;
     }
     if (!res.ok) {
@@ -249,7 +261,7 @@ async function handleDeny() {
       showError(data?.error || 'An error occurred.');
       setSubmitting(false); _isSubmitting = false; return;
     }
-    window.location.replace(data.redirect_url);
+    safeRedirect(data.redirect_url);
   } catch {
     showError('Unable to connect to server. Please try again.');
     setSubmitting(false); _isSubmitting = false;

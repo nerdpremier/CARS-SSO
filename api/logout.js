@@ -56,14 +56,13 @@ export default async function handler(req, res) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        // [FIX] timing-safe comparison ผ่าน HMAC-SHA256 ป้องกัน length-based timing oracle
+        // [FIX] timing-safe comparison ผ่าน HMAC-SHA256 ป้องกัน length-based timing leak
         // เดิม: skip timingSafeEqual เมื่อ length ต่างกัน → attacker วัด response time รู้ความยาว secret
-        //        startup-check.js บังคับ CRON_SECRET >= 32 chars → attacker รู้ว่าต้องลอง 32+ chars เท่านั้น
-        // แก้:  HMAC ทั้งสองค่าด้วย key คงที่ → output ยาวเท่ากันเสมอ (32 bytes)
-        //        timingSafeEqual บน HMAC output = constant time ทุกกรณี ไม่ว่า input จะยาวเท่าใด
+        // แก้: HMAC ทั้งสองค่าด้วย key คงที่ก่อน → output ยาวเท่ากันเสมอ (32 bytes)
+        //      timingSafeEqual บน HMAC output = constant time ทุกกรณี
         let authorized = false;
         try {
-            const hmacKey      = Buffer.from('cron_secret_compare', 'utf8');
+            const hmacKey     = Buffer.from('cron_secret_compare', 'utf8');
             const expectedHmac = crypto.createHmac('sha256', hmacKey)
                 .update(Buffer.from(cronSecret, 'utf8'))
                 .digest();

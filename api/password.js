@@ -14,9 +14,19 @@ import resetHandler  from './reset-password.js';
 import { setSecurityHeaders } from '../lib/response-utils.js';
 
 export default async function handler(req, res) {
+    // ตรวจ Content-Type ก่อน dispatch: เหตุผลเดียวกับ mfa.js
+    // body parser ข้ามเมื่อ Content-Type ไม่ตรง → req.body?.action = undefined → 400 ไม่มี headers
+    if (req.method !== 'POST') {
+        setSecurityHeaders(res);
+        return res.status(405).send();
+    }
+    if (!req.headers['content-type']?.includes('application/json')) {
+        setSecurityHeaders(res);
+        return res.status(415).json({ error: 'Content-Type must be application/json' });
+    }
     const action = req.body?.action;
     if (action === 'forgot') return forgotHandler(req, res);
     if (action === 'reset')  return resetHandler(req, res);
     setSecurityHeaders(res);
-    return res.status(400).json({ error: 'Invalid action. Use action: "forgot" or "reset"' });
+    return res.status(400).json({ error: 'Invalid request' });
 }

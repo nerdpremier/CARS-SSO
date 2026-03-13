@@ -311,6 +311,19 @@ export default async function handler(req, res) {
                 }
             }
 
+            // [FIX] redirect_back type/length validation
+            // เดิม: ไม่มีการตรวจ type ก่อนส่งเข้า validateRedirectBack() และ new URL()
+            //        ถ้าส่ง redirect_back เป็น object/array → truthy → ผ่าน if-check
+            //        validateRedirectBack(非string) อาจ behave unexpectedly ขึ้นกับ implementation
+            //        new URL(非string) throw TypeError แต่อยู่ใน try/catch ทำให้ ssoUrl silently fail
+            // แก้:  ตรวจ type + length ก่อนเสมอ เหมือน fingerprint validation ด้านบน
+            //        redirect_uri registered ยาวสูงสุด 512 chars (ตาม oauth_clients schema)
+            if (redirect_back !== undefined) {
+                if (typeof redirect_back !== 'string' || redirect_back.length > 512) {
+                    return res.status(400).json({ error: 'Invalid request data' });
+                }
+            }
+
             // logId validation
             if (logId == null || (typeof logId !== 'string' && typeof logId !== 'number')) {
                 return res.status(400).json({ error: 'Invalid session. Please sign in again.' });
@@ -404,13 +417,15 @@ export default async function handler(req, res) {
                     const mfaCode = crypto.randomInt(100000, 1000000).toString();
                     const mfaHash = hashMfaCode(mfaCode, parsedLogId);
 
-                    // reset mfa_attempts = 0: ป้องกัน navigate back แล้ว re-submit
+                    // total_mfa_attempts เพิ่มภายใน transaction เดียวกันกับ FOR UPDATE lock
+                    // ป้องกัน TOCTOU: ดู resend-mfa.js สำหรับคำอธิบายเต็ม
                     await loginClient.query(
                         `UPDATE login_risks
-                         SET mfa_code       = $1,
-                             mfa_expires_at = NOW() + INTERVAL '5 minutes',
-                             mfa_resent_at  = NOW(),
-                             mfa_attempts   = 0
+                         SET mfa_code             = $1,
+                             mfa_expires_at       = NOW() + INTERVAL '5 minutes',
+                             mfa_resent_at        = NOW(),
+                             mfa_attempts         = 0,
+                             total_mfa_attempts   = COALESCE(total_mfa_attempts, 0) + 1
                          WHERE id = $2`,
                         [mfaHash, parsedLogId]
                     );
@@ -430,20 +445,6 @@ export default async function handler(req, res) {
                     } catch (mailErr) {
                         console.error('[ERROR] auth.js sendMail (MFA):', mailErr.message);
                         auditLog('MFA_EMAIL_FAIL', { username, ip });
-                    }
-
-                    // increment total เฉพาะเมื่อ email สำเร็จ — ไม่ penalize เมื่อ SMTP down
-                    if (emailSent) {
-                        try {
-                            await pool.query(
-                                `UPDATE login_risks
-                                 SET total_mfa_attempts = COALESCE(total_mfa_attempts, 0) + 1
-                                 WHERE id = $1`,
-                                [parsedLogId]
-                            );
-                        } catch (dbErr) {
-                            console.error('[ERROR] auth.js total_mfa_attempts increment failed:', dbErr.message);
-                        }
                     }
 
                     return res.status(200).json({
@@ -469,10 +470,13 @@ export default async function handler(req, res) {
                 const jti = crypto.randomUUID();
                 let token;
                 try {
+                    // iss/aud ใส่ใน sign options ไม่ใช่ payload โดยตรง:
+                    // jsonwebtoken encode audience array ต่างจาก string ถ้าอยู่ใน payload
+                    // และ options path ผ่าน library's own claim-encoding pipeline
                     token = jwt.sign(
-                        { username, jti, iss: 'auth-service', aud: 'api' },
+                        { username, jti },
                         process.env.JWT_SECRET,
-                        { expiresIn: '8h' }
+                        { expiresIn: SESSION_DURATION_SECONDS, issuer: 'auth-service', audience: 'api' }
                     );
                 } catch (jwtErr) {
                     await loginClient.query('ROLLBACK');
@@ -485,21 +489,31 @@ export default async function handler(req, res) {
                 // [BUG-006 FIX] SSO Redirect สำหรับ LOW path
                 let redirectUrl = null;
                 if (redirect_back && user?.id) {
-                    const isValidRedirect = await validateRedirectBack(redirect_back);
-                    if (isValidRedirect) {
-                        const sso_token      = crypto.randomUUID();
-                        const sso_token_hash = crypto.createHash('sha256').update(sso_token).digest('hex');
-                        try {
-                            await pool.query(
-                                'INSERT INTO sso_tokens (token, user_id) VALUES ($1, $2)',
-                                [sso_token_hash, user.id]
-                            );
-                            redirectUrl = `${redirect_back}?sso_token=${sso_token}`;
-                        } catch (ssoErr) {
-                            console.error('[WARN] auth.js SSO token insert failed:', ssoErr.message);
+                    // ตรวจ URL format ก่อน validateRedirectBack + new URL()
+                    // redirect_back ผ่าน type/length validation มาแล้ว แต่ยังไม่ตรวจ scheme
+                    // new URL('javascript:alert(1)') ไม่ throw → ส่งไปยัง third-party ได้ถ้าไม่ตรวจ
+                    // ตรวจ https: protocol เพื่อป้องกัน javascript: / data: / file: scheme
+                    let isHttps = false;
+                    try { isHttps = new URL(redirect_back).protocol === 'https:'; } catch { /* invalid URL */ }
+                    if (isHttps) {
+                        const isValidRedirect = await validateRedirectBack(redirect_back);
+                        if (isValidRedirect) {
+                            const sso_token      = crypto.randomUUID();
+                            const sso_token_hash = crypto.createHash('sha256').update(sso_token).digest('hex');
+                            try {
+                                await pool.query(
+                                    'INSERT INTO sso_tokens (token, user_id) VALUES ($1, $2)',
+                                    [sso_token_hash, user.id]
+                                );
+                                const ssoUrl = new URL(redirect_back);
+                                ssoUrl.searchParams.set('sso_token', sso_token);
+                                redirectUrl = ssoUrl.toString();
+                            } catch (ssoErr) {
+                                console.error('[WARN] auth.js SSO token insert failed:', ssoErr.message);
+                            }
+                        } else {
+                            console.error('[WARN] auth.js: redirect_back not registered:', redirect_back);
                         }
-                    } else {
-                        console.error('[WARN] auth.js: redirect_back not registered:', redirect_back);
                     }
                 }
 

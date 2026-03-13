@@ -112,12 +112,16 @@ export default async function handler(req, res) {
             const mfaCode = crypto.randomInt(100000, 1000000).toString();
             const mfaHash = hashMfaCode(mfaCode, parsedLogId);
 
+            // total_mfa_attempts เพิ่มภายใน transaction เดียวกันกับ FOR UPDATE lock
+            // ป้องกัน TOCTOU: ถ้า increment อยู่นอก COMMIT จะมีช่องว่างที่ concurrent request
+            // อ่านค่าเก่าก่อน increment เสร็จ ทำให้ผ่าน guard ทั้งคู่และเกิน TOTAL_MFA_MAX ได้
             await client.query(
                 `UPDATE login_risks
-                 SET mfa_code       = $1,
-                     mfa_expires_at = NOW() + INTERVAL '5 minutes',
-                     mfa_resent_at  = NOW(),
-                     mfa_attempts   = 0
+                 SET mfa_code             = $1,
+                     mfa_expires_at       = NOW() + INTERVAL '5 minutes',
+                     mfa_resent_at        = NOW(),
+                     mfa_attempts         = 0,
+                     total_mfa_attempts   = COALESCE(total_mfa_attempts, 0) + 1
                  WHERE id = $2`,
                 [mfaHash, parsedLogId]
             );
@@ -137,19 +141,6 @@ export default async function handler(req, res) {
             } catch (mailErr) {
                 console.error('[ERROR] resend-mfa.js sendMail:', mailErr.message);
                 auditLog('MFA_RESEND_EMAIL_FAIL', { username, ip });
-            }
-
-            if (emailSent) {
-                try {
-                    await pool.query(
-                        `UPDATE login_risks
-                         SET total_mfa_attempts = COALESCE(total_mfa_attempts, 0) + 1
-                         WHERE id = $1`,
-                        [parsedLogId]
-                    );
-                } catch (dbErr) {
-                    console.error('[ERROR] resend-mfa.js total_mfa_attempts increment failed:', dbErr.message);
-                }
             }
 
             auditLog('MFA_RESEND_SUCCESS', { username, ip });

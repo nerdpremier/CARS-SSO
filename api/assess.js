@@ -157,6 +157,8 @@ export default async function handler(req, res) {
             }
 
             if (level === 'HIGH') {
+                // HIGH: คืน logId: null เสมอ — ไม่ log insertedId เพื่อไม่ leak ID จริงผ่าน log
+                // (log aggregator อาจ accessible โดย parties ที่ไม่ควรเห็น session ID)
                 auditLog('ASSESS_HIGH_RISK', { username, ip, score });
                 return res.status(200).json({ risk_level: 'HIGH', logId: null });
             }

@@ -189,9 +189,9 @@ export default async function handler(req, res) {
             let token;
             try {
                 token = jwt.sign(
-                    { username, jti, iss: 'auth-service', aud: 'api' },
+                    { username, jti },
                     process.env.JWT_SECRET,
-                    { expiresIn: '8h' }
+                    { expiresIn: SESSION_DURATION_SECONDS, issuer: 'auth-service', audience: 'api' }
                 );
             } catch (jwtErr) {
                 await client.query('ROLLBACK');
@@ -204,21 +204,30 @@ export default async function handler(req, res) {
             // [BUG-005 FIX] SSO Redirect
             let redirectUrl = null;
             if (redirect_back && row.user_id) {
-                const isValidRedirect = await validateRedirectBack(redirect_back);
-                if (isValidRedirect) {
-                    const sso_token      = crypto.randomUUID();
-                    const sso_token_hash = crypto.createHash('sha256').update(sso_token).digest('hex');
-                    try {
-                        await pool.query(
-                            'INSERT INTO sso_tokens (token, user_id) VALUES ($1, $2)',
-                            [sso_token_hash, row.user_id]
-                        );
-                        redirectUrl = `${redirect_back}?sso_token=${sso_token}`;
-                    } catch (ssoErr) {
-                        console.error('[WARN] verify-mfa.js SSO token insert failed:', ssoErr.message);
+                // ตรวจ URL scheme ก่อน validateRedirectBack + new URL()
+                // ป้องกัน javascript: / data: / file: scheme ที่อาจผ่าน validateRedirectBack
+                // ถ้า oauth_clients table มี entry ที่มี scheme อื่น (ซึ่งไม่ควรมีแต่ defense-in-depth)
+                let isHttps = false;
+                try { isHttps = new URL(redirect_back).protocol === 'https:'; } catch { /* invalid URL */ }
+                if (isHttps) {
+                    const isValidRedirect = await validateRedirectBack(redirect_back);
+                    if (isValidRedirect) {
+                        const sso_token      = crypto.randomUUID();
+                        const sso_token_hash = crypto.createHash('sha256').update(sso_token).digest('hex');
+                        try {
+                            await pool.query(
+                                'INSERT INTO sso_tokens (token, user_id) VALUES ($1, $2)',
+                                [sso_token_hash, row.user_id]
+                            );
+                            const ssoUrl = new URL(redirect_back);
+                            ssoUrl.searchParams.set('sso_token', sso_token);
+                            redirectUrl = ssoUrl.toString();
+                        } catch (ssoErr) {
+                            console.error('[WARN] verify-mfa.js SSO token insert failed:', ssoErr.message);
+                        }
+                    } else {
+                        console.error('[WARN] verify-mfa.js: redirect_back not registered:', redirect_back);
                     }
-                } else {
-                    console.error('[WARN] verify-mfa.js: redirect_back not registered:', redirect_back);
                 }
             }
 

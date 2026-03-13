@@ -72,10 +72,20 @@ function hashClientSecret(secret) {
 }
 
 // safeHexEqual: timing-safe string comparison ป้องกัน timing attack
+// รองรับ hex string เท่านั้น — ต้องตรวจ format ก่อน Buffer.from()
+//   Buffer.from('ZZZ', 'hex') = empty buffer (length 0)
+//   timingSafeEqual(Buffer(0), Buffer(N)) throw RangeError → crash
+//   HEX_REGEX ป้องกัน non-hex input เข้า Buffer.from()
+const HEX_REGEX = /^[0-9a-f]+$/i;
 function safeHexEqual(a, b) {
+    if (typeof a !== 'string' || typeof b !== 'string') return false;
     if (a.length !== b.length) return false;
+    if (!HEX_REGEX.test(a) || !HEX_REGEX.test(b)) return false;
     try {
-        return crypto.timingSafeEqual(Buffer.from(a, 'hex'), Buffer.from(b, 'hex'));
+        const aBuf = Buffer.from(a, 'hex');
+        const bBuf = Buffer.from(b, 'hex');
+        if (aBuf.length !== bBuf.length) return false;
+        return crypto.timingSafeEqual(aBuf, bBuf);
     } catch {
         return false;
     }
@@ -182,14 +192,14 @@ async function handleClients(req, res, ip) {
 
             for (const uri of redirect_uris) {
                 if (typeof uri !== 'string' || uri.length > 512)
-                    return res.status(400).json({ error: `Invalid redirect_uri: ${uri}` });
+                    return res.status(400).json({ error: 'Each redirect_uri must be a string (max 512 characters)' });
                 let parsed;
                 try { parsed = new URL(uri); } catch {
-                    return res.status(400).json({ error: `Invalid redirect_uri format: ${uri}` });
+                    return res.status(400).json({ error: 'One or more redirect_uris has an invalid URL format' });
                 }
                 const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
                 if (parsed.protocol !== 'https:' && !isLocalhost)
-                    return res.status(400).json({ error: `redirect_uri must use HTTPS (or localhost for dev): ${uri}` });
+                    return res.status(400).json({ error: 'All redirect_uris must use HTTPS (or localhost for development)' });
             }
 
             // Validate allowed_scopes (optional — default ['profile'])
@@ -683,11 +693,17 @@ async function handleToken(req, res, ip) {
             if (rt.revoked_at) {
                 await tokenClient.query('ROLLBACK');
                 // Token ถูก revoke แล้ว → อาจเป็น token reuse attack → revoke ทั้งหมดของ client+user
-                await pool.query(
-                    `UPDATE oauth_tokens SET revoked_at = NOW()
-                     WHERE client_id = $1 AND username = $2 AND revoked_at IS NULL`,
-                    [client_id, rt.username]
-                );
+                // try/catch แยก: ถ้า revoke-all fail → ยัง return 400 + audit log เสมอ
+                // ถ้าไม่มี try/catch: pool.query throw → outer catch → return 500 + audit log หาย
+                try {
+                    await pool.query(
+                        `UPDATE oauth_tokens SET revoked_at = NOW()
+                         WHERE client_id = $1 AND username = $2 AND revoked_at IS NULL`,
+                        [client_id, rt.username]
+                    );
+                } catch (revokeErr) {
+                    console.error('[ERROR] oauth.js refresh reuse revoke-all failed:', revokeErr.message);
+                }
                 auditLog('OAUTH_REFRESH_REUSE_REVOKE_ALL', {
                     clientId: client_id, username: rt.username, ip, note: 'possible token theft'
                 });
@@ -773,7 +789,8 @@ async function handleUserinfo(req, res, ip) {
     }
 
     // Probabilistic cleanup: 2% ต่อ request — ลบ expired tokens (fire-and-forget)
-    if (Math.random() < 0.02) {
+    // ใช้ crypto.randomInt แทน Math.random สำหรับ consistency ใน security-sensitive file
+    if (crypto.randomInt(100) < 2) {
         pool.query(`DELETE FROM oauth_tokens WHERE expires_at < NOW()`)
             .catch(err => console.error('[WARN] oauth_tokens cleanup error:', err.message));
         pool.query(`DELETE FROM oauth_codes WHERE expires_at < NOW() AND used = TRUE`)

@@ -179,8 +179,19 @@
   document.addEventListener('click', function(e) {
     var a = e.target.closest('a[href]'); if (!a) return;
     var href = a.getAttribute('href');
+    // [FIX] ป้องกัน javascript: / vbscript: / data: scheme injection
+    // เดิม: ตรวจเฉพาะ http/mailto/tel/# → href ที่เป็น 'javascript:...' ไม่ตรงกับ filter ใดเลย
+    //        → e.preventDefault() + CarsNav.go('javascript:...') → setTimeout → location.href = 'javascript:...'
+    //        Modern browser block javascript: บน location.href แต่บาง context ยังทำงานได้
+    // แก้:  ตรวจ protocol ผ่าน URL API ก่อน ถ้าไม่ใช่ https:/http: ปล่อยให้ browser handle ตามปกติ
+    //        (mailto:/tel:/#-anchor ยังทำงานได้เหมือนเดิมเพราะ return ก่อน preventDefault)
     if (!href || href.startsWith('#') || href.startsWith('http') ||
         href.startsWith('mailto:') || href.startsWith('tel:')) return;
+    // ตรวจ scheme ของ non-http relative/absolute path
+    try {
+      var parsed = new URL(href, window.location.origin);
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return;
+    } catch { return; }
     if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
     e.preventDefault(); CarsNav.go(href);
   });

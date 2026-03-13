@@ -213,7 +213,10 @@ function esc(str) {
 }
 function formatDate(iso) {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'});
+  // [FIX] escape output ก่อนใส่ใน innerHTML
+  // new Date(malicious_string) → toLocaleDateString คืน "Invalid Date" (safe string)
+  // แต่ถ้า browser locale plugin หรือ Intl polyfill behave แปลก → esc() เป็น defense-in-depth
+  return esc(new Date(iso).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'}));
 }
 async function copyText(elemId, btn) {
   const text = document.getElementById(elemId)?.textContent||'';

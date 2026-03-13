@@ -16,6 +16,7 @@ import { parse }    from 'cookie';
 import { pool }     from '../lib/db.js';
 import { checkRateLimit } from '../lib/rate-limit.js';
 import { getClientIp }    from '../lib/ip-utils.js';
+import crypto       from 'crypto';
 import {
     setSecurityHeaders, auditLog,
     USER_REGEX,
@@ -40,7 +41,8 @@ export default async function handler(req, res) {
     }
 
     // Probabilistic cleanup (5%): session.js ถูกเรียกบ่อยที่สุด → cleanup coverage สูง
-    if (Math.random() < 0.05) {
+    // ใช้ crypto.randomInt แทน Math.random: ไฟล์นี้ sensitive ควรหลีกเลี่ยง PRNG ที่ไม่ใช่ CSPRNG
+    if (crypto.randomInt(100) < 5) {
         pool.query("DELETE FROM revoked_tokens WHERE expires_at < NOW()")
             .catch(err => console.error('[WARN] session.js revoked_tokens cleanup error:', err.message));
     }

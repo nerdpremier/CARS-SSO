@@ -20,6 +20,19 @@ let resendCooldown = 0;
 let resendTimerInterval;
 let countdownTimer;
 
+// safeHref: ตรวจ scheme ก่อน window.location.href
+// authData.redirectUrl / data.redirectUrl มาจาก server — defense-in-depth ป้องกัน javascript: scheme
+// nextUrl ผ่าน same-origin check แล้ว (เป็น path-only) → ปลอดภัยโดยไม่ต้องตรวจ
+// fallback '/welcome' เป็น hardcoded path → ปลอดภัย
+// อนุญาตเฉพาะ https: และ http: (localhost dev)
+function safeHref(url) {
+    if (typeof url !== 'string') return false;
+    try {
+        const p = new URL(url).protocol;
+        return p === 'https:' || p === 'http:';
+    } catch { return false; }
+}
+
 async function withGuard(fn, event) {
     if (_submitting) return;
     _submitting = true;
@@ -100,8 +113,8 @@ function getSecureFp() {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function validateEmail(e)    { return (!e || !EMAIL_REGEX.test(e)) ? 'Please enter a valid email address.' : null; }
 function validatePassword(p) {
-    const r = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^_\-+=()])[A-Za-z\d@$!%*?&#^_\-+=()]{8,}$/;
-    return (p && !r.test(p)) ? 'Password must be 8+ characters with uppercase, lowercase, a number, and a symbol.' : null;
+    const r = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^_\-+=()])[A-Za-z\d@$!%*?&#^_\-+=()]{8,128}$/;
+    return (p && !r.test(p)) ? 'Password must be 8–128 characters with uppercase, lowercase, a number, and a symbol.' : null;
 }
 function validateInputs(u, p) {
     if (u && u.length > 32)  return 'Username must be 32 characters or fewer.';
@@ -181,18 +194,17 @@ async function preLoginCheck() {
     const rawNext = sp.get('next') || (pendingRedirect?.startsWith('/') ? pendingRedirect : null) || null;
     let nextUrl = null;
     if (rawNext) {
-        if (rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.startsWith('/\\')) {
-            // path-only: /developer, /oauth/authorize?...
-            nextUrl = rawNext;
-        } else {
-            try {
-                const u = new URL(rawNext);
-                // full URL ต้อง same-origin เท่านั้น → extract path+search+hash
-                if (u.origin === window.location.origin) {
-                    nextUrl = u.pathname + u.search + u.hash;
-                }
-            } catch { /* ไม่ใช่ URL ที่ valid — ไม่ redirect */ }
-        }
+        try {
+            // new URL(rawNext, origin) normalize ผ่าน URL parser ของ browser:
+            //   WHATWG URL Standard: preprocessor ตัด \t, \n, \r ออกก่อน parse
+            //   '/\t//evil.com' -> strip \t -> '//evil.com' -> https://evil.com
+            //   -> u.origin != window.location.origin -> reject (open redirect ถูกบล็อก)
+            //   path-only '/developer' -> same-origin -> extract path correctly
+            const u = new URL(rawNext, window.location.origin);
+            if (u.origin === window.location.origin) {
+                nextUrl = u.pathname + u.search + u.hash;
+            }
+        } catch { /* ไม่ใช่ URL ที่ valid — ไม่ redirect */ }
     }
     const redirect_back = sp.get('redirect_back') || (pendingRedirect && !pendingRedirect.startsWith('/') ? pendingRedirect : null) || null;
 
@@ -234,7 +246,9 @@ async function preLoginCheck() {
             } else {
                 updateStatus('success','Signed in successfully. Redirecting…');
                 // [FIX-REDIRECT] ลำดับ priority: SSO redirect → same-origin next → welcome
-                const dest = authData.redirectUrl || nextUrl || '/welcome';
+                // safeHref() กัน redirectUrl ที่มี javascript:/data: scheme (defense-in-depth)
+                const ssoUrl = authData.redirectUrl && safeHref(authData.redirectUrl) ? authData.redirectUrl : null;
+                const dest = ssoUrl || nextUrl || '/welcome';
                 setTimeout(()=>window.location.href=dest,1000);
             }
         } else {
@@ -271,7 +285,9 @@ async function verifyMFA() {
              'mfa_redirect_back','mfa_next_url'].forEach(k=>sessionStorage.removeItem(k));
             updateStatus('success','Identity verified. Redirecting…');
             // [FIX-REDIRECT] ลำดับ priority: SSO redirect → same-origin next → welcome
-            const dest = data.redirectUrl || nextUrl || '/welcome';
+            // safeHref() กัน redirectUrl ที่มี javascript:/data: scheme (defense-in-depth)
+            const ssoUrl = data.redirectUrl && safeHref(data.redirectUrl) ? data.redirectUrl : null;
+            const dest = ssoUrl || nextUrl || '/welcome';
             setTimeout(()=>window.location.href=dest,1000);
         } else {
             const data = await res.json();

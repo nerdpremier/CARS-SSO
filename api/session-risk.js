@@ -62,17 +62,39 @@ export default async function handler(req, res) {
 
     const ip = getClientIp(req);
 
-    // ── ตรวจว่าเป็น server-to-server (Nginx Aggregator) หรือ client ──
-    // Aggregator ส่ง: Authorization: Bearer <AGGREGATOR_SECRET>
-    // Client ส่ง:     session_token cookie + CSRF header
-    const authHeader      = req.headers['authorization'] || '';
-    const aggregatorToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    const isAggregator    = !!( process.env.AGGREGATOR_SECRET &&
-                                aggregatorToken &&
-                                aggregatorToken === process.env.AGGREGATOR_SECRET );
+    // ── ตรวจ mode การเรียก ──────────────────────────────────────
+    // Mode 1: client proxy  → Authorization: Bearer <OAuth access_token>
+    // Mode 2: aggregator    → Authorization: Bearer <AGGREGATOR_SECRET>
+    // Mode 3: browser       → session_token cookie + CSRF header
+    const authHeader  = req.headers['authorization'] || '';
+    const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
-    if (!isAggregator) {
-        // client mode: ต้องมี CSRF
+    const isAggregator = !!( process.env.AGGREGATOR_SECRET &&
+                             bearerToken &&
+                             bearerToken === process.env.AGGREGATOR_SECRET );
+
+    // ตรวจว่าเป็น OAuth access_token (proxy mode จาก client app)
+    let oauthUsername = null;
+    if (bearerToken && !isAggregator) {
+        try {
+            const { createHash } = await import('crypto');
+            const tokenHash = createHash('sha256').update(bearerToken).digest('hex');
+            const { pool: dbPool } = await import('../lib/db.js');
+            const oauthRes = await dbPool.query(
+                `SELECT username FROM oauth_tokens
+                 WHERE token_hash = $1 AND expires_at > NOW()`,
+                [tokenHash]
+            );
+            if (oauthRes.rows[0]) {
+                oauthUsername = oauthRes.rows[0].username;
+            }
+        } catch { /* fail open */ }
+    }
+
+    const isOAuthProxy = !!oauthUsername;
+
+    if (!isAggregator && !isOAuthProxy) {
+        // browser mode: ต้องมี CSRF
         if (!validateCsrfToken(req)) {
             return res.status(403).json({ error: 'Invalid CSRF token' });
         }
@@ -90,8 +112,59 @@ export default async function handler(req, res) {
     }
 
     // ── 1. Verify JWT ─────────────────────────────────────────
-    // client mode  → อ่านจาก cookie
-    // aggregator mode → อ่านจาก body.session_id (raw JWT string)
+    // oauth proxy mode → username ได้จาก oauth_tokens แล้ว ข้าม JWT
+    // aggregator mode  → อ่านจาก body.session_id
+    // browser mode     → อ่านจาก cookie
+
+    // OAuth proxy: ข้าม JWT verify ใช้ username จาก oauth_tokens แทน
+    if (isOAuthProxy) {
+        // ดึง jti จาก oauth_tokens เพื่อใช้ track session
+        let oauthJti = null;
+        let oauthPreScore = 0.1;
+        try {
+            const { pool: dbPool } = await import('../lib/db.js');
+            const lr = await dbPool.query(
+                `SELECT lr.risk_score_normalized, lr.jti
+                 FROM oauth_tokens ot
+                 LEFT JOIN login_risks lr ON lr.username = ot.username
+                 WHERE ot.token_hash = $1
+                 ORDER BY lr.created_at DESC LIMIT 1`,
+                [createHash('sha256').update(bearerToken).digest('hex')]
+            );
+            if (lr.rows[0]) {
+                oauthPreScore = lr.rows[0].risk_score_normalized ?? 0.1;
+                oauthJti      = lr.rows[0].jti ?? `oauth_${oauthUsername}`;
+            }
+        } catch { /* fail open */ }
+
+        const behavior    = req.body?.behavior ?? null;
+        const rawPostScore = await fetchBehaviorScore(behavior);
+        const postScore    = rawPostScore !== null ? rawPostScore : oauthPreScore;
+        const combinedScore = mergeScores(oauthPreScore, postScore, { preWeight: 0.3, postWeight: 0.7 });
+
+        let action = combinedScore >= REVOKE_THRESHOLD   ? 'revoke'   :
+                     combinedScore >= STEP_UP_THRESHOLD  ? 'step_up'  :
+                     combinedScore >= WARN_THRESHOLD     ? 'warn'     : 'ok';
+
+        try {
+            const { pool: dbPool } = await import('../lib/db.js');
+            await dbPool.query(
+                `INSERT INTO session_risks (jti, username, pre_score, post_score, combined_score, action, ip)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                [oauthJti ?? oauthUsername, oauthUsername,
+                 parseFloat(oauthPreScore.toFixed(4)), parseFloat(postScore.toFixed(4)),
+                 parseFloat(combinedScore.toFixed(4)), action, ip]
+            );
+        } catch { /* log fail → ไม่ block */ }
+
+        auditLog('SESSION_RISK_CHECKPOINT', {
+            username: oauthUsername, mode: 'oauth_proxy',
+            combinedScore: combinedScore.toFixed(4), action, ip,
+        });
+
+        return res.status(200).json({ action, combinedScore: parseFloat(combinedScore.toFixed(4)) });
+    }
+
     let token;
     if (isAggregator) {
         if (!isValidBody(req.body) || typeof req.body.session_id !== 'string') {

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'"
+    />
+    <title>CARS SSO</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="/assets/styles/tokens.css" />
+    <link rel="stylesheet" href="/assets/styles/base.css" />
+    <link rel="stylesheet" href="/assets/styles/components.css" />
+    <link rel="stylesheet" href="/assets/styles/pages.css" />
+  </head>
+  <body class="app-pending" data-theme="dark">
+    <noscript>แอปนี้ต้องเปิดใช้งาน JavaScript</noscript>
+
+    <div id="app">
+      <div class="app-shell">
+        <header class="app-topbar" id="topbar" hidden>
+          <a class="brand" href="/welcome" data-link aria-label="CARS SSO Home">
+            <span class="brand-mark" aria-hidden="true">
+              <svg class="icon icon--lg" aria-hidden="true">
+                <use href="/assets/icons.svg#i-logo"></use>
+              </svg>
+            </span>
+            <span class="brand-name">CARS SSO</span>
+          </a>
+
+          <nav class="topbar-nav" aria-label="Primary">
+            <a class="topbar-link" href="/developer" data-link>
+              <svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#i-link"></use></svg>
+              <span>พอร์ทัลนักพัฒนา</span>
+            </a>
+            <button class="topbar-link" type="button" id="theme-toggle">
+              <svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#i-moon"></use></svg>
+              <span>ธีม</span>
+            </button>
+          </nav>
+
+          <div class="topbar-right">
+            <div class="user-pill" id="user-pill" hidden>
+              <span class="user-pill-dot" aria-hidden="true"></span>
+              <span id="user-name">…</span>
+            </div>
+            <button class="btn btn--ghost" id="btn-logout" type="button" hidden>
+              <svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#i-exit"></use></svg>
+              <span>ออกจากระบบ</span>
+            </button>
+          </div>
+        </header>
+
+        <main class="app-main">
+          <section class="route" id="route" aria-live="polite" aria-busy="true"></section>
+        </main>
+
+        <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>

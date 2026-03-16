@@ -10,15 +10,18 @@ const PORT = Number.parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '127.0.0.1';
 
 const STATIC_REWRITES = new Map([
-  ['/', 'login.html'],
-  ['/login', 'login.html'],
-  ['/register', 'register.html'],
-  ['/mfa', 'mfa-verify.html'],
-  ['/welcome', 'welcome.html'],
+  // SPA entrypoints
+  ['/', 'index.html'],
+  ['/login', 'index.html'],
+  ['/register', 'index.html'],
+  ['/mfa', 'index.html'],
+  ['/welcome', 'index.html'],
+  ['/developer', 'index.html'],
+
+  // Keep legacy pages available (optional)
   ['/forgot-password', 'forgot-password.html'],
   ['/reset-password', 'reset-password.html'],
   ['/oauth/authorize', 'authorize.html'],
-  ['/developer', 'developer-portal.html'],
 ]);
 
 const API_REWRITES = new Map([

@@ -21,15 +21,15 @@
     { "source": "/api/mfa",         "destination": "/api/mfa.js" },
     { "source": "/api/password",    "destination": "/api/password.js" },
 
-    { "source": "/",                "destination": "/login.html" },
-    { "source": "/login",           "destination": "/login.html" },
-    { "source": "/register",        "destination": "/register.html" },
-    { "source": "/mfa",             "destination": "/mfa-verify.html" },
-    { "source": "/welcome",         "destination": "/welcome.html" },
+    { "source": "/",                "destination": "/index.html" },
+    { "source": "/login",           "destination": "/index.html" },
+    { "source": "/register",        "destination": "/index.html" },
+    { "source": "/mfa",             "destination": "/index.html" },
+    { "source": "/welcome",         "destination": "/index.html" },
     { "source": "/forgot-password", "destination": "/forgot-password.html" },
     { "source": "/reset-password",  "destination": "/reset-password.html" },
     { "source": "/oauth/authorize", "destination": "/authorize.html" },
-    { "source": "/developer",       "destination": "/developer-portal.html" }
+    { "source": "/developer",       "destination": "/index.html" }
   ],
 
   "headers": [

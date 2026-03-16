@@ -102,6 +102,10 @@ body {
 /* ── Portal Body ─────────────────────────────────────────── */
 .portal-body { display: flex; flex-direction: column; gap: 20px; padding: 28px 28px 0; }
 
+/* ── Utility: field hints (CSP-safe, no inline styles) ─────── */
+.field-hint--mt6 { margin-top: 6px; }
+.field-hint--invisible { visibility: hidden; }
+
 /* ── Section ─────────────────────────────────────────────── */
 .portal-section {
   background: var(--bg);

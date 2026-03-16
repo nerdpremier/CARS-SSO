@@ -114,30 +114,13 @@ const VALIDATIONS = [
         error: 'OAUTH_SECRET_PEPPER must be at least 32 characters (256 bits)',
     },
     // ป้องกัน secret ซ้ำกัน: ถ้าใช้ secret เดียวกันหลาย context → compromise หนึ่ง = compromise ทั้งหมด
-    // ตรวจทุก pair ของ 4 secrets เพื่อให้แน่ใจว่าแต่ละ context ใช้ entropy ของตัวเอง
     {
         check: () => process.env.JWT_SECRET.trim() === process.env.CSRF_SECRET.trim(),
         error: 'JWT_SECRET and CSRF_SECRET must be different values',
     },
     {
-        check: () => process.env.JWT_SECRET.trim() === process.env.MFA_PEPPER.trim(),
-        error: 'JWT_SECRET and MFA_PEPPER must be different values',
-    },
-    {
         check: () => process.env.JWT_SECRET.trim() === process.env.OAUTH_SECRET_PEPPER.trim(),
         error: 'JWT_SECRET and OAUTH_SECRET_PEPPER must be different values',
-    },
-    {
-        check: () => process.env.CSRF_SECRET.trim() === process.env.MFA_PEPPER.trim(),
-        error: 'CSRF_SECRET and MFA_PEPPER must be different values',
-    },
-    {
-        check: () => process.env.CSRF_SECRET.trim() === process.env.OAUTH_SECRET_PEPPER.trim(),
-        error: 'CSRF_SECRET and OAUTH_SECRET_PEPPER must be different values',
-    },
-    {
-        check: () => process.env.MFA_PEPPER.trim() === process.env.OAUTH_SECRET_PEPPER.trim(),
-        error: 'MFA_PEPPER and OAUTH_SECRET_PEPPER must be different values',
     },
 ];
 

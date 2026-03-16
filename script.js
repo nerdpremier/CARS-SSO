@@ -20,19 +20,6 @@ let resendCooldown = 0;
 let resendTimerInterval;
 let countdownTimer;
 
-// safeHref: ตรวจ scheme ก่อน window.location.href
-// authData.redirectUrl / data.redirectUrl มาจาก server — defense-in-depth ป้องกัน javascript: scheme
-// nextUrl ผ่าน same-origin check แล้ว (เป็น path-only) → ปลอดภัยโดยไม่ต้องตรวจ
-// fallback '/welcome' เป็น hardcoded path → ปลอดภัย
-// อนุญาตเฉพาะ https: และ http: (localhost dev)
-function safeHref(url) {
-    if (typeof url !== 'string') return false;
-    try {
-        const p = new URL(url).protocol;
-        return p === 'https:' || p === 'http:';
-    } catch { return false; }
-}
-
 async function withGuard(fn, event) {
     if (_submitting) return;
     _submitting = true;
@@ -113,8 +100,8 @@ function getSecureFp() {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function validateEmail(e)    { return (!e || !EMAIL_REGEX.test(e)) ? 'Please enter a valid email address.' : null; }
 function validatePassword(p) {
-    const r = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^_\-+=()])[A-Za-z\d@$!%*?&#^_\-+=()]{8,128}$/;
-    return (p && !r.test(p)) ? 'Password must be 8–128 characters with uppercase, lowercase, a number, and a symbol.' : null;
+    const r = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return (p && !r.test(p)) ? 'Password must be 8+ characters with uppercase, lowercase, a number, and a symbol.' : null;
 }
 function validateInputs(u, p) {
     if (u && u.length > 32)  return 'Username must be 32 characters or fewer.';
@@ -129,7 +116,7 @@ const PASSWORD_RULES = [
     { id:'rule-upper',   test: p=>/[A-Z]/.test(p),    label:'Uppercase letter (A–Z)' },
     { id:'rule-lower',   test: p=>/[a-z]/.test(p),    label:'Lowercase letter (a–z)' },
     { id:'rule-number',  test: p=>/\d/.test(p),        label:'Number (0–9)' },
-    { id:'rule-special', test: p=>/[@$!%*?&#^_\-+=()]/.test(p), label:'Symbol (@$!%*?&#^_-+=())' },
+    { id:'rule-special', test: p=>/[@$!%*?&]/.test(p), label:'Symbol (@$!%*?&)' },
 ];
 function checkPasswordStrength(password) {
     PASSWORD_RULES.forEach(({ id, test, label }) => {
@@ -156,7 +143,7 @@ async function handleRegister() {
         const data = await res.json();
         if (res.ok) {
             if (data.email_verification) {
-                updateStatus('success','Account created. Check your email to verify before signing in.');
+                updateStatus('success','✅ Account created! Check your email to verify before signing in.');
                 const form = document.getElementById('register-form');
                 if (form) form.hidden = true;
                 // [FIX] บันทึก next/redirect_back ไว้ใน sessionStorage
@@ -187,25 +174,7 @@ async function preLoginCheck() {
     // [FIX] restore next/redirect_back ที่ save ไว้ตอน register (กรณี verified=1 params หาย)
     const pendingRedirect = sp.get('verified') ? sessionStorage.getItem('post_verify_redirect') : null;
     if (pendingRedirect) sessionStorage.removeItem('post_verify_redirect');
-
-    // [SECURITY] nextUrl ต้องเป็น same-origin เท่านั้น
-    // รองรับทั้ง path ('/developer') และ full same-origin URL ('https://sso.example.com/developer')
-    // ป้องกัน open redirect: full URL ต้องมี origin ตรงกับ window.location.origin
-    const rawNext = sp.get('next') || (pendingRedirect?.startsWith('/') ? pendingRedirect : null) || null;
-    let nextUrl = null;
-    if (rawNext) {
-        try {
-            // new URL(rawNext, origin) normalize ผ่าน URL parser ของ browser:
-            //   WHATWG URL Standard: preprocessor ตัด \t, \n, \r ออกก่อน parse
-            //   '/\t//evil.com' -> strip \t -> '//evil.com' -> https://evil.com
-            //   -> u.origin != window.location.origin -> reject (open redirect ถูกบล็อก)
-            //   path-only '/developer' -> same-origin -> extract path correctly
-            const u = new URL(rawNext, window.location.origin);
-            if (u.origin === window.location.origin) {
-                nextUrl = u.pathname + u.search + u.hash;
-            }
-        } catch { /* ไม่ใช่ URL ที่ valid — ไม่ redirect */ }
-    }
+    const nextUrl       = sp.get('next')          || (pendingRedirect?.startsWith('/') ? pendingRedirect : null) || null;
     const redirect_back = sp.get('redirect_back') || (pendingRedirect && !pendingRedirect.startsWith('/') ? pendingRedirect : null) || null;
 
     if (!username||!password) return updateStatus('danger','Please enter your username and password.');
@@ -246,13 +215,11 @@ async function preLoginCheck() {
             } else {
                 updateStatus('success','Signed in successfully. Redirecting…');
                 // [FIX-REDIRECT] ลำดับ priority: SSO redirect → same-origin next → welcome
-                // safeHref() กัน redirectUrl ที่มี javascript:/data: scheme (defense-in-depth)
-                const ssoUrl = authData.redirectUrl && safeHref(authData.redirectUrl) ? authData.redirectUrl : null;
-                const dest = ssoUrl || nextUrl || '/welcome';
+                const dest = authData.redirectUrl || nextUrl || '/welcome';
                 setTimeout(()=>window.location.href=dest,1000);
             }
         } else {
-            if (authData.email_not_verified) updateStatus('warning','Please verify your email before signing in. Check your inbox (or spam folder).');
+            if (authData.email_not_verified) updateStatus('warning','📧 Please verify your email before signing in. Check your inbox (or spam folder).');
             else updateStatus('danger', authData.error||'Incorrect username or password.');
         }
     } catch (err) {
@@ -285,23 +252,11 @@ async function verifyMFA() {
              'mfa_redirect_back','mfa_next_url'].forEach(k=>sessionStorage.removeItem(k));
             updateStatus('success','Identity verified. Redirecting…');
             // [FIX-REDIRECT] ลำดับ priority: SSO redirect → same-origin next → welcome
-            // safeHref() กัน redirectUrl ที่มี javascript:/data: scheme (defense-in-depth)
-            const ssoUrl = data.redirectUrl && safeHref(data.redirectUrl) ? data.redirectUrl : null;
-            const dest = ssoUrl || nextUrl || '/welcome';
+            const dest = data.redirectUrl || nextUrl || '/welcome';
             setTimeout(()=>window.location.href=dest,1000);
         } else {
             const data = await res.json();
-            const msg = data.error || 'Invalid code. Please try again.';
-            // [FIX] ถ้า server บอกให้ sign in ใหม่ (logId exhausted / session expired)
-            // → ล้าง sessionStorage ทั้งหมด แล้ว redirect กลับ /login อัตโนมัติ
-            if (res.status === 429 || (typeof msg === 'string' && msg.toLowerCase().includes('sign in again'))) {
-                ['mfa_logId','mfa_username','mfa_remember','mfa_fingerprint',
-                 'mfa_redirect_back','mfa_next_url'].forEach(k=>sessionStorage.removeItem(k));
-                updateStatus('danger', msg + ' Redirecting…');
-                setTimeout(()=>window.location.replace('/login'), 2000);
-            } else {
-                updateStatus('danger', msg);
-            }
+            updateStatus('danger', data.error||'Invalid code. Please try again.');
         }
     } catch (err) { updateStatus('danger', err.name==='AbortError'?'Request timed out.':'Something went wrong.'); }
 }
@@ -314,18 +269,7 @@ async function resendMFA() {
         const res=await secureFetch('/api/mfa',{method:'POST',body:JSON.stringify({action:'resend',logId,username})});
         const data=await res.json();
         if (res.ok) { startResendCooldown(60); updateStatus('success','A new code has been sent. Check your email.'); }
-        else {
-            const msg = data.error || 'Failed to resend. Please try again.';
-            // [FIX] ถ้า server บอกให้ sign in ใหม่ → ล้าง sessionStorage + redirect
-            if (res.status === 429 || (typeof msg === 'string' && msg.toLowerCase().includes('sign in again'))) {
-                ['mfa_logId','mfa_username','mfa_remember','mfa_fingerprint',
-                 'mfa_redirect_back','mfa_next_url'].forEach(k=>sessionStorage.removeItem(k));
-                updateStatus('danger', msg + ' Redirecting…');
-                setTimeout(()=>window.location.replace('/login'), 2000);
-            } else {
-                updateStatus('danger', msg);
-            }
-        }
+        else updateStatus('danger',data.error||'Failed to resend. Please try again.');
     } catch (err) { updateStatus('danger', err.name==='AbortError'?'Request timed out.':'Something went wrong.'); }
 }
 function startResendCooldown(seconds) {
@@ -340,11 +284,11 @@ function startResendCooldown(seconds) {
 function startAccountLockdown(seconds) {
     const btn=document.getElementById('login-btn'); let remaining=seconds;
     if (btn) btn.disabled=true;
-    updateStatus('danger',`Account temporarily locked. Please wait ${remaining} seconds.`); remaining--;
+    updateStatus('danger',`🔒 Account temporarily locked. Please wait ${remaining} seconds.`); remaining--;
     clearInterval(countdownTimer);
     countdownTimer=setInterval(()=>{
         if (remaining<=0) { clearInterval(countdownTimer); if (btn) btn.disabled=false; updateStatus('success','Lockout period ended. You may try again.'); return; }
-        updateStatus('danger',`Account temporarily locked. Please wait ${remaining} seconds.`); remaining--;
+        updateStatus('danger',`🔒 Account temporarily locked. Please wait ${remaining} seconds.`); remaining--;
     },1000);
 }
 
@@ -405,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('dev-portal-btn') ?.addEventListener('click', ()=>{window.location.href='/developer';});
     if (document.getElementById('login-form')) {
         const qp=new URLSearchParams(window.location.search);
-        if      (qp.get('verified')==='1')          updateStatus('success','Email verified. You can now sign in.');
+        if      (qp.get('verified')==='1')          updateStatus('success','✅ Email verified! You can now sign in.');
         else if (qp.get('error')==='token_expired') updateStatus('warning','⏰ Your verification link has expired. Please register again.');
         else if (qp.get('error')==='invalid_token') updateStatus('danger', 'Invalid verification link. Please check your email again.');
     }

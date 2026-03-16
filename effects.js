@@ -5,21 +5,10 @@
 (function () {
   'use strict';
 
-  var REDUCE_MOTION = false;
-  try { REDUCE_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
-  catch { REDUCE_MOTION = false; }
-
-  // Tiny developer-friendly signature (subtle, professional)
-  try {
-    // eslint-disable-next-line no-console
-    console.log('%cCARS SSO%c — secure by design.', 'font-weight:700;color:#4F6EF7', 'color:#5A6A8A');
-  } catch { /* ignore */ }
-
   /* ══════════════════════════════════════════════════════════
      1.  INTERACTIVE CANVAS
      ══════════════════════════════════════════════════════════ */
   (function initCanvas() {
-    if (REDUCE_MOTION) return;
     var canvas = document.createElement('canvas');
     canvas.id = 'bg-canvas';
     canvas.setAttribute('aria-hidden', 'true');
@@ -190,19 +179,8 @@
   document.addEventListener('click', function(e) {
     var a = e.target.closest('a[href]'); if (!a) return;
     var href = a.getAttribute('href');
-    // [FIX] ป้องกัน javascript: / vbscript: / data: scheme injection
-    // เดิม: ตรวจเฉพาะ http/mailto/tel/# → href ที่เป็น 'javascript:...' ไม่ตรงกับ filter ใดเลย
-    //        → e.preventDefault() + CarsNav.go('javascript:...') → setTimeout → location.href = 'javascript:...'
-    //        Modern browser block javascript: บน location.href แต่บาง context ยังทำงานได้
-    // แก้:  ตรวจ protocol ผ่าน URL API ก่อน ถ้าไม่ใช่ https:/http: ปล่อยให้ browser handle ตามปกติ
-    //        (mailto:/tel:/#-anchor ยังทำงานได้เหมือนเดิมเพราะ return ก่อน preventDefault)
     if (!href || href.startsWith('#') || href.startsWith('http') ||
         href.startsWith('mailto:') || href.startsWith('tel:')) return;
-    // ตรวจ scheme ของ non-http relative/absolute path
-    try {
-      var parsed = new URL(href, window.location.origin);
-      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return;
-    } catch { return; }
     if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
     e.preventDefault(); CarsNav.go(href);
   });
@@ -221,30 +199,12 @@
     }
     return _tc;
   }
-  function toastIconId(type) {
-    if (type === 'success') return 'i-check';
-    if (type === 'danger')  return 'i-alert';
-    if (type === 'warning') return 'i-alert';
-    return 'i-alert';
-  }
-
-  function createSvgIcon(symbolId) {
-    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('class', 'icon icon--lg');
-    svg.setAttribute('aria-hidden', 'true');
-    var use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-    use.setAttributeNS(null, 'href', '/assets/icons.svg#' + symbolId);
-    svg.appendChild(use);
-    return svg;
-  }
+  var ICONS = { success: '✅', danger: '⚠️', warning: '🔔', info: 'ℹ️' };
   window.CarsToast = function(opts) {
     var type = opts.type || 'info';
     var dur  = opts.duration != null ? opts.duration : 4000;
     var t  = document.createElement('div'); t.className = 'toast toast--' + type; t.setAttribute('role', 'alert');
-    var ic = document.createElement('span');
-    ic.className = 'toast-icon';
-    ic.setAttribute('aria-hidden', 'true');
-    ic.appendChild(createSvgIcon(toastIconId(type)));
+    var ic = document.createElement('span'); ic.className = 'toast-icon'; ic.setAttribute('aria-hidden', 'true'); ic.textContent = ICONS[type] || 'ℹ️';
     var bd = document.createElement('div'); bd.className = 'toast-body';
     if (opts.title) {
       var tt = document.createElement('div'); tt.className = 'toast-title'; tt.textContent = opts.title; bd.appendChild(tt);
@@ -274,7 +234,6 @@
      4.  BUTTON RIPPLE
      ══════════════════════════════════════════════════════════ */
   function ripple(btn, e) {
-    if (REDUCE_MOTION) return;
     var rect = btn.getBoundingClientRect();
     var size = Math.max(rect.width, rect.height) * 2.6;
     var cx   = e && e.clientX != null ? e.clientX - rect.left : rect.width  / 2;
@@ -299,30 +258,5 @@
       if (el && el.matches('.btn-primary,.btn-portal,.btn-signout,.btn-create')) ripple(el, null);
     }
   });
-
-  /* ══════════════════════════════════════════════════════════
-     5.  EASTER EGG (professional, non-distracting)
-     ══════════════════════════════════════════════════════════ */
-  (function konami() {
-    // Hidden and harmless: just a toast. No layout changes, no delays.
-    var seq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
-    var i = 0;
-    document.addEventListener('keydown', function(e) {
-      var k = e.key;
-      if (k === seq[i]) i++;
-      else i = (k === seq[0]) ? 1 : 0;
-      if (i === seq.length) {
-        i = 0;
-        if (window.CarsToast) {
-          window.CarsToast({
-            type: 'success',
-            title: 'Security mode',
-            msg: 'Engaged. (You found the easter egg.)',
-            duration: 3200
-          });
-        }
-      }
-    });
-  })();
 
 }());

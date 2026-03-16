@@ -12,32 +12,6 @@
 let _oauthParams  = {};
 let _isSubmitting = false;
 
-// safeRedirect: ตรวจ scheme ก่อน window.location.replace()
-// data.redirect_url มาจาก server ซึ่งตรวจ registered URI แล้ว
-// แต่ defense-in-depth: client ต้องตรวจเองด้วยในกรณีที่ server response ถูก tamper
-// อนุญาตเฉพาะ https: และ http: (localhost dev) — ป้องกัน javascript: / data: / file: scheme
-function safeRedirect(url) {
-  if (typeof url !== 'string') return;
-  let parsed;
-  try { parsed = new URL(url); } catch { return; }
-  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return;
-  window.location.replace(url);
-}
-
-// ── CSRF ──────────────────────────────────────────────────────
-// handleAllow ส่ง POST ไป /api/oauth/authorize ต้องแนบ CSRF token
-// ใช้ pattern เดียวกับ script.js (double-submit cookie)
-let _csrfToken = null;
-async function getCsrfToken() {
-  if (_csrfToken) return _csrfToken;
-  const res = await fetch('/api/csrf', { credentials: 'include' });
-  if (!res.ok) throw new Error('Unable to fetch CSRF token');
-  const data = await res.json();
-  if (typeof data.token !== 'string' || !data.token) throw new Error('Invalid CSRF token');
-  _csrfToken = data.token;
-  return _csrfToken;
-}
-
 const $id = id => document.getElementById(id);
 
 function showStatus(msg, type = 'danger') {
@@ -172,31 +146,12 @@ async function handleAllow() {
       body.code_challenge_method = _oauthParams.codeChallengeMethod;
     }
 
-    const csrfToken = await getCsrfToken();
     const res = await fetch('/api/oauth/authorize', {
       method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    // auto-retry หาก CSRF หมดอายุ
-    let data = await res.json();
-    if (res.status === 403) {
-      _csrfToken = null;
-      const csrfToken2 = await getCsrfToken();
-      const res2 = await fetch('/api/oauth/authorize', {
-        method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken2 },
-        body: JSON.stringify(body),
-      });
-      data = await res2.json();
-      if (!res2.ok) {
-        if (res2.status === 401) { window.location.replace(`/login?next=${encodeURIComponent(window.location.href)}`); return; }
-        showStatus(data?.error || 'An error occurred. Please try again.');
-        setSubmitting(false); _isSubmitting = false; return;
-      }
-      safeRedirect(data.redirect_url);
-      return;
-    }
+    const data = await res.json();
 
     if (!res.ok) {
       if (res.status === 401) {
@@ -208,7 +163,7 @@ async function handleAllow() {
       _isSubmitting = false;
       return;
     }
-    safeRedirect(data.redirect_url);
+    window.location.replace(data.redirect_url);
   } catch {
     showStatus('Unable to connect to server. Please try again.');
     setSubmitting(false);
@@ -216,75 +171,22 @@ async function handleAllow() {
   }
 }
 
-async function handleDeny() {
+function handleDeny() {
   if (_isSubmitting) return;
-  if (!_oauthParams.clientId || !_oauthParams.redirectUri || !_oauthParams.state) {
+  if (!_oauthParams.redirectUri || !_oauthParams.state) {
     showError('Cannot process denial — authorization parameters are missing.');
     return;
   }
   _isSubmitting = true;
   setSubmitting(true);
-  const denyBody = JSON.stringify({
-    client_id:    _oauthParams.clientId,
-    redirect_uri: _oauthParams.redirectUri,
-    state:        _oauthParams.state,
-    approved:     false,
-  });
-  try {
-    const csrfToken = await getCsrfToken();
-    const res = await fetch('/api/oauth/authorize', {
-      method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-      body: denyBody,
-    });
-    let data = await res.json();
-    // [FIX] CSRF 403 retry — same pattern as handleAllow()
-    if (res.status === 403) {
-      _csrfToken = null;
-      const csrfToken2 = await getCsrfToken();
-      const res2 = await fetch('/api/oauth/authorize', {
-        method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken2 },
-        body: denyBody,
-      });
-      data = await res2.json();
-      if (!res2.ok) {
-        if (res2.status === 401) { window.location.replace(`/login?next=${encodeURIComponent(window.location.href)}`); return; }
-        showError(data?.error || 'An error occurred.');
-        setSubmitting(false); _isSubmitting = false; return;
-      }
-      safeRedirect(data.redirect_url);
-      return;
-    }
-    if (!res.ok) {
-      if (res.status === 401) { window.location.replace(`/login?next=${encodeURIComponent(window.location.href)}`); return; }
-      showError(data?.error || 'An error occurred.');
-      setSubmitting(false); _isSubmitting = false; return;
-    }
-    safeRedirect(data.redirect_url);
-  } catch {
-    showError('Unable to connect to server. Please try again.');
-    setSubmitting(false); _isSubmitting = false;
-  }
-}
-
-// [FIX] handleSignOut: POST /api/logout แล้ว redirect ไป /login
-// เดิม authorize.html มี <a href="/logout"> ซึ่งไม่มี route ใน vercel.json → 404
-// ผู้ใช้ที่ต้องการ sign out ก่อน authorize จะทำไม่ได้
-async function handleSignOut() {
-  try {
-    const csrfToken = await getCsrfToken();
-    await fetch('/api/logout', {
-      method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-    });
-  } catch { /* ไม่สนใจ error — redirect ต่อเสมอ */ }
-  window.location.replace('/login');
+  const url = new URL(_oauthParams.redirectUri);
+  url.searchParams.set('error', 'access_denied');
+  url.searchParams.set('state', _oauthParams.state);
+  window.location.replace(url.toString());
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  $id('btn-allow')  ?.addEventListener('click', handleAllow);
-  $id('btn-deny')   ?.addEventListener('click', handleDeny);
-  $id('btn-signout')?.addEventListener('click', handleSignOut);
+  $id('btn-allow')?.addEventListener('click', handleAllow);
+  $id('btn-deny')?.addEventListener('click',  handleDeny);
   init();
 });

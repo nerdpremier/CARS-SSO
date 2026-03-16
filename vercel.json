@@ -10,9 +10,7 @@
     { "source": "/api/auth",        "destination": "/api/auth.js" },
     { "source": "/api/assess",      "destination": "/api/assess.js" },
     { "source": "/api/session",     "destination": "/api/session.js" },
-    { "source": "/api/session-risk","destination": "/api/session-risk.js" },
-    { "source": "/api/logout",            "destination": "/api/logout.js" },
-    { "source": "/api/logout-redirect", "destination": "/api/logout.js" },
+    { "source": "/api/logout",      "destination": "/api/logout.js" },
     { "source": "/api/csrf",        "destination": "/api/csrf.js" },
     { "source": "/api/cleanup",     "destination": "/api/logout.js" },
 
@@ -21,23 +19,15 @@
     { "source": "/api/mfa",         "destination": "/api/mfa.js" },
     { "source": "/api/password",    "destination": "/api/password.js" },
 
-    { "source": "/style.css",             "destination": "/ref/style.css" },
-    { "source": "/effects.js",            "destination": "/ref/effects.js" },
-    { "source": "/script.js",             "destination": "/ref/script.js" },
-    { "source": "/authorize.js",          "destination": "/ref/authorize.js" },
-    { "source": "/logout.js",             "destination": "/ref/logout.js" },
-    { "source": "/developer-portal.css",  "destination": "/ref/developer-portal.css" },
-    { "source": "/developer-portal.js",   "destination": "/ref/developer-portal.js" },
-
-    { "source": "/",                "destination": "/ref/login.html" },
-    { "source": "/login",           "destination": "/ref/login.html" },
-    { "source": "/register",        "destination": "/ref/register.html" },
-    { "source": "/mfa",             "destination": "/ref/mfa-verify.html" },
-    { "source": "/welcome",         "destination": "/ref/welcome.html" },
-    { "source": "/forgot-password", "destination": "/ref/forgot-password.html" },
-    { "source": "/reset-password",  "destination": "/ref/reset-password.html" },
-    { "source": "/oauth/authorize", "destination": "/ref/authorize.html" },
-    { "source": "/developer",       "destination": "/ref/developer-portal.html" }
+    { "source": "/",                "destination": "/login.html" },
+    { "source": "/login",           "destination": "/login.html" },
+    { "source": "/register",        "destination": "/register.html" },
+    { "source": "/mfa",             "destination": "/mfa-verify.html" },
+    { "source": "/welcome",         "destination": "/welcome.html" },
+    { "source": "/forgot-password", "destination": "/forgot-password.html" },
+    { "source": "/reset-password",  "destination": "/reset-password.html" },
+    { "source": "/oauth/authorize", "destination": "/authorize.html" },
+    { "source": "/developer",       "destination": "/developer-portal.html" }
   ],
 
   "headers": [

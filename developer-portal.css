@@ -70,7 +70,7 @@ body {
   border: 1px solid var(--gold-bd);
   border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
+  color: var(--gold);
 }
 
 .portal-title {
@@ -220,7 +220,7 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 .result-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
-.result-check { font-size: 15px; }
+.result-check { display: inline-flex; align-items: center; justify-content: center; color: var(--ok); }
 .result-title { font-size: 13.5px; font-weight: 700; color: var(--ok); }
 
 .credential-row {
@@ -263,6 +263,12 @@ body {
   border: 1px solid var(--warn-bd);
   border-radius: 9px;
   margin-top: 10px; line-height: 1.5;
+}
+.warn-notice-icon {
+  display: inline-flex;
+  margin-right: 6px;
+  vertical-align: -0.2em;
+  color: var(--warn);
 }
 
 /* ── App Card ────────────────────────────────────────────── */
@@ -419,7 +425,7 @@ body {
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.confirm-icon  { font-size: 36px; margin-bottom: 12px; }
+.confirm-icon  { display: inline-flex; margin-bottom: 12px; color: var(--ink-2); }
 .confirm-title {
   font-family: var(--font-head);
   font-size: 18px; font-weight: 400; color: var(--ink);

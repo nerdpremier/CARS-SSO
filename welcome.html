@@ -16,11 +16,15 @@
     <div class="auth-card auth-card--centered">
 
       <div class="brand-row brand-row--centered" data-stagger>
-        <div class="brand-logo" aria-hidden="true">🚗</div>
+        <div class="brand-logo" aria-hidden="true">
+          <svg class="icon icon--lg" aria-hidden="true"><use href="/assets/icons.svg#i-logo"></use></svg>
+        </div>
         <span class="brand-name">CARS SSO</span>
       </div>
 
-      <div class="welcome-check" aria-hidden="true" data-stagger>✓</div>
+      <div class="welcome-check" aria-hidden="true" data-stagger>
+        <svg class="icon icon--xl" aria-hidden="true"><use href="/assets/icons.svg#i-check"></use></svg>
+      </div>
       <h1 class="page-title" data-stagger>Access <em>granted</em></h1>
 
       <div class="session-badge" data-stagger>
@@ -35,7 +39,10 @@
       <div class="action-divider" data-stagger><span>Quick actions</span></div>
 
       <button type="button" id="dev-portal-btn" class="btn-portal" data-stagger>
-        🔗 Developer Portal
+        <span class="btn-icon-row" aria-hidden="true">
+          <svg class="icon icon--lg" aria-hidden="true"><use href="/assets/icons.svg#i-link"></use></svg>
+          <span>Developer Portal</span>
+        </span>
       </button>
 
       <button type="button" id="logout-btn" class="btn-signout" data-stagger>

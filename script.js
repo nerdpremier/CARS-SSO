@@ -156,7 +156,7 @@ async function handleRegister() {
         const data = await res.json();
         if (res.ok) {
             if (data.email_verification) {
-                updateStatus('success','✅ Account created! Check your email to verify before signing in.');
+                updateStatus('success','Account created. Check your email to verify before signing in.');
                 const form = document.getElementById('register-form');
                 if (form) form.hidden = true;
                 // [FIX] บันทึก next/redirect_back ไว้ใน sessionStorage
@@ -252,7 +252,7 @@ async function preLoginCheck() {
                 setTimeout(()=>window.location.href=dest,1000);
             }
         } else {
-            if (authData.email_not_verified) updateStatus('warning','📧 Please verify your email before signing in. Check your inbox (or spam folder).');
+            if (authData.email_not_verified) updateStatus('warning','Please verify your email before signing in. Check your inbox (or spam folder).');
             else updateStatus('danger', authData.error||'Incorrect username or password.');
         }
     } catch (err) {
@@ -340,11 +340,11 @@ function startResendCooldown(seconds) {
 function startAccountLockdown(seconds) {
     const btn=document.getElementById('login-btn'); let remaining=seconds;
     if (btn) btn.disabled=true;
-    updateStatus('danger',`🔒 Account temporarily locked. Please wait ${remaining} seconds.`); remaining--;
+    updateStatus('danger',`Account temporarily locked. Please wait ${remaining} seconds.`); remaining--;
     clearInterval(countdownTimer);
     countdownTimer=setInterval(()=>{
         if (remaining<=0) { clearInterval(countdownTimer); if (btn) btn.disabled=false; updateStatus('success','Lockout period ended. You may try again.'); return; }
-        updateStatus('danger',`🔒 Account temporarily locked. Please wait ${remaining} seconds.`); remaining--;
+        updateStatus('danger',`Account temporarily locked. Please wait ${remaining} seconds.`); remaining--;
     },1000);
 }
 
@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('dev-portal-btn') ?.addEventListener('click', ()=>{window.location.href='/developer';});
     if (document.getElementById('login-form')) {
         const qp=new URLSearchParams(window.location.search);
-        if      (qp.get('verified')==='1')          updateStatus('success','✅ Email verified! You can now sign in.');
+        if      (qp.get('verified')==='1')          updateStatus('success','Email verified. You can now sign in.');
         else if (qp.get('error')==='token_expired') updateStatus('warning','⏰ Your verification link has expired. Please register again.');
         else if (qp.get('error')==='invalid_token') updateStatus('danger', 'Invalid verification link. Please check your email again.');
     }

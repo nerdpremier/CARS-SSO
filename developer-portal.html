@@ -18,7 +18,9 @@
        role="dialog" aria-modal="true" aria-labelledby="confirm-title-text"
        hidden>
     <div class="confirm-box">
-      <div class="confirm-icon" aria-hidden="true">🗑️</div>
+      <div class="confirm-icon" aria-hidden="true">
+        <svg class="icon icon--xl" aria-hidden="true"><use href="/assets/icons.svg#i-trash"></use></svg>
+      </div>
       <div class="confirm-title" id="confirm-title-text">Delete this app?</div>
       <p class="confirm-msg">
         You are about to delete <strong class="confirm-app-name" id="confirm-app-name"></strong>.
@@ -35,7 +37,9 @@
        role="dialog" aria-modal="true" aria-labelledby="rotate-title-text"
        hidden>
     <div class="confirm-box">
-      <div class="confirm-icon" aria-hidden="true">🔄</div>
+      <div class="confirm-icon" aria-hidden="true">
+        <svg class="icon icon--xl" aria-hidden="true"><use href="/assets/icons.svg#i-rotate"></use></svg>
+      </div>
       <div class="confirm-title" id="rotate-title-text">Rotate secret?</div>
       <p class="confirm-msg">
         You are about to rotate the secret for <strong class="confirm-app-name" id="rotate-app-name"></strong>.
@@ -57,7 +61,9 @@
           <span class="nav-back-arrow" aria-hidden="true">←</span>
           Dashboard
         </a>
-        <div class="portal-icon" aria-hidden="true">🔗</div>
+        <div class="portal-icon" aria-hidden="true">
+          <svg class="icon icon--lg" aria-hidden="true"><use href="/assets/icons.svg#i-link"></use></svg>
+        </div>
         <div>
           <div class="portal-title">Developer Portal</div>
           <div class="portal-subtitle">CARS SSO Integration</div>
@@ -104,7 +110,9 @@
 
         <div class="result-box" id="result-box" hidden>
           <div class="result-header">
-            <div class="result-check" aria-hidden="true">✅</div>
+            <div class="result-check" aria-hidden="true">
+              <svg class="icon icon--lg" aria-hidden="true"><use href="/assets/icons.svg#i-check"></use></svg>
+            </div>
             <div class="result-title">App created — save these credentials now</div>
           </div>
           <div class="credential-row">
@@ -122,7 +130,10 @@
             </div>
           </div>
           <div class="warn-notice">
-            ⚠️ <strong>Save your Client Secret now</strong> — it cannot be viewed again.
+            <span class="warn-notice-icon" aria-hidden="true">
+              <svg class="icon icon--lg" aria-hidden="true"><use href="/assets/icons.svg#i-alert"></use></svg>
+            </span>
+            <strong>Save your Client Secret now</strong> — it cannot be viewed again.
             If lost, you must rotate to generate a new one.
           </div>
         </div>

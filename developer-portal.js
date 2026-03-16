@@ -64,7 +64,9 @@ async function loadApps() {
     if (apps.length === 0) {
       list.innerHTML = `
         <div class="apps-empty">
-          <div class="apps-empty-icon">🔌</div>
+          <div class="apps-empty-icon" aria-hidden="true">
+            <svg class="icon icon--xl icon--muted" aria-hidden="true"><use href="/assets/icons.svg#i-link"></use></svg>
+          </div>
           <div class="apps-empty-title">No apps yet</div>
           <div class="apps-empty-sub">Fill in the form above to create your first app.</div>
         </div>`;
@@ -79,7 +81,12 @@ async function loadApps() {
           <div class="app-date">Created ${formatDate(app.created_at)}</div>
         </div>
         <div class="app-card-actions">
-          <button class="btn-rotate" type="button" data-action="rotate" data-client-id="${esc(app.client_id)}" data-app-name="${esc(app.name)}">🔄 Rotate Secret</button>
+          <button class="btn-rotate" type="button" data-action="rotate" data-client-id="${esc(app.client_id)}" data-app-name="${esc(app.name)}">
+            <span class="btn-icon-row" aria-hidden="true">
+              <svg class="icon icon--lg" aria-hidden="true"><use href="/assets/icons.svg#i-rotate"></use></svg>
+              <span>Rotate Secret</span>
+            </span>
+          </button>
           <button class="btn-delete" type="button" data-action="delete" data-client-id="${esc(app.client_id)}" data-app-name="${esc(app.name)}">Delete</button>
         </div>
       </div>`).join('');
@@ -141,7 +148,7 @@ async function createApp() {
 // FIX: className was 'create-error' (no CSS rule). Now uses 'danger' to match CSS.
 function showCreateError(msg) {
   const el = document.getElementById('create-status');
-  el.textContent = '⚠️ ' + msg;
+  el.textContent = msg;
   el.className   = 'danger';
   el.hidden      = false;    // CSP-safe
   document.getElementById('btn-create').disabled    = false;
@@ -240,8 +247,8 @@ function formatDate(iso) {
 }
 async function copyText(elemId, btn) {
   const text = document.getElementById(elemId)?.textContent||'';
-  try { await navigator.clipboard.writeText(text); btn.textContent='✅ Copied'; setTimeout(()=>{btn.textContent='Copy';},1800); }
-  catch { btn.textContent='❌ Failed'; setTimeout(()=>{btn.textContent='Copy';},1800); }
+  try { await navigator.clipboard.writeText(text); btn.textContent='Copied'; setTimeout(()=>{btn.textContent='Copy';},1800); }
+  catch { btn.textContent='Copy failed'; setTimeout(()=>{btn.textContent='Copy';},1800); }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

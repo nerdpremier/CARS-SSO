@@ -291,15 +291,27 @@ body.page-exit .portal-wrap { animation: pageOut .28s cubic-bezier(.4,0,1,1) for
   width: 36px; height: 36px; background: var(--accent-l);
   border: 1.5px solid rgba(79,110,247,.2); border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 17px; flex-shrink: 0;
+  flex-shrink: 0;
 }
 .brand-name {
   font-family: var(--font-head); font-size: 16px;
   color: var(--ink); letter-spacing: -.01em;
 }
 
+/* Icons (SVG sprite) */
+.icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.15em;
+  color: currentColor;
+}
+.icon--lg { width: 1.25em; height: 1.25em; }
+.icon--xl { width: 2.2em; height: 2.2em; }
+.icon--muted { color: var(--dim); }
+
 /* Page title */
-.page-icon { display: block; font-size: 32px; margin-bottom: 12px; }
+.page-icon { display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; }
 .page-title {
   font-family: var(--font-head); font-size: 24px;
   color: var(--ink); letter-spacing: -.4px;
@@ -402,6 +414,12 @@ body.page-exit .portal-wrap { animation: pageOut .28s cubic-bezier(.4,0,1,1) for
   transition: border-color .18s, background .18s, color .18s, transform .14s, box-shadow .18s;
   margin-bottom: 28px; position: relative; overflow: hidden;
 }
+.btn-icon-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
 .btn-portal:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-l); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(79,110,247,.12); }
 .btn-portal:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
 
@@ -441,7 +459,7 @@ body.page-exit .portal-wrap { animation: pageOut .28s cubic-bezier(.4,0,1,1) for
 /* ═══════════════════════════════════════════════════════════
    14. WELCOME PAGE
    ═══════════════════════════════════════════════════════════ */
-.welcome-check { font-size: 42px; margin-bottom: 14px; color: var(--ok); display: block; animation: countUp .6s cubic-bezier(.16,1,.3,1) .2s both; }
+.welcome-check { margin-bottom: 14px; color: var(--ok); display: inline-flex; align-items: center; justify-content: center; animation: countUp .6s cubic-bezier(.16,1,.3,1) .2s both; }
 .welcome-user { font-size: 14px; color: var(--muted); margin-bottom: 26px; }
 .welcome-user strong { font-weight: 700; color: var(--accent); }
 .session-badge { display: inline-flex; align-items: center; gap: 7px; background: var(--ok-bg); border: 1.5px solid var(--ok-bd); border-radius: 20px; padding: 5px 13px 5px 9px; font-size: 12px; font-weight: 600; color: #065F46; margin-bottom: 14px; }

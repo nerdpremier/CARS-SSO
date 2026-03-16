@@ -24,9 +24,13 @@
       <!-- Consent UI -->
       <div id="consent-ui" hidden>
         <div class="app-connector" aria-hidden="true">
-          <div class="app-icon-cars">🚗</div>
+          <div class="app-icon-cars">
+            <svg class="icon icon--lg" aria-hidden="true"><use href="/assets/icons.svg#i-logo"></use></svg>
+          </div>
           <div class="app-connector-arrow">⟷</div>
-          <div class="app-icon-ext">🔗</div>
+          <div class="app-icon-ext">
+            <svg class="icon icon--lg" aria-hidden="true"><use href="/assets/icons.svg#i-link"></use></svg>
+          </div>
         </div>
 
         <div class="app-badge">
@@ -46,14 +50,18 @@
 
         <div class="permission-box" role="list" aria-label="Requested permissions">
           <div class="permission-item" role="listitem">
-            <div class="permission-icon" aria-hidden="true">👤</div>
+            <div class="permission-icon" aria-hidden="true">
+              <svg class="icon icon--lg" aria-hidden="true"><use href="/assets/icons.svg#i-user"></use></svg>
+            </div>
             <div>
               <div class="permission-name">Your username</div>
               <div class="permission-desc">Read-only — not your password</div>
             </div>
           </div>
           <div class="permission-item" role="listitem">
-            <div class="permission-icon" aria-hidden="true">✅</div>
+            <div class="permission-icon" aria-hidden="true">
+              <svg class="icon icon--lg" aria-hidden="true"><use href="/assets/icons.svg#i-check"></use></svg>
+            </div>
             <div>
               <div class="permission-name">Login status</div>
               <div class="permission-desc">Confirms you're authenticated</div>
@@ -74,7 +82,9 @@
 
       <!-- Error state -->
       <div id="error-ui" class="authorize-error-ui" hidden>
-        <div class="authorize-error-icon" aria-hidden="true">⚠️</div>
+        <div class="authorize-error-icon" aria-hidden="true">
+          <svg class="icon icon--xl" aria-hidden="true"><use href="/assets/icons.svg#i-alert"></use></svg>
+        </div>
         <h1 class="page-title">Something went <em>wrong</em></h1>
         <div id="error-msg" class="status-box danger" role="alert">
           Unable to load authorization data

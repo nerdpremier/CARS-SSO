@@ -221,12 +221,30 @@
     }
     return _tc;
   }
-  var ICONS = { success: '✅', danger: '⚠️', warning: '🔔', info: 'ℹ️' };
+  function toastIconId(type) {
+    if (type === 'success') return 'i-check';
+    if (type === 'danger')  return 'i-alert';
+    if (type === 'warning') return 'i-alert';
+    return 'i-alert';
+  }
+
+  function createSvgIcon(symbolId) {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'icon icon--lg');
+    svg.setAttribute('aria-hidden', 'true');
+    var use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttributeNS(null, 'href', '/assets/icons.svg#' + symbolId);
+    svg.appendChild(use);
+    return svg;
+  }
   window.CarsToast = function(opts) {
     var type = opts.type || 'info';
     var dur  = opts.duration != null ? opts.duration : 4000;
     var t  = document.createElement('div'); t.className = 'toast toast--' + type; t.setAttribute('role', 'alert');
-    var ic = document.createElement('span'); ic.className = 'toast-icon'; ic.setAttribute('aria-hidden', 'true'); ic.textContent = ICONS[type] || 'ℹ️';
+    var ic = document.createElement('span');
+    ic.className = 'toast-icon';
+    ic.setAttribute('aria-hidden', 'true');
+    ic.appendChild(createSvgIcon(toastIconId(type)));
     var bd = document.createElement('div'); bd.className = 'toast-body';
     if (opts.title) {
       var tt = document.createElement('div'); tt.className = 'toast-title'; tt.textContent = opts.title; bd.appendChild(tt);

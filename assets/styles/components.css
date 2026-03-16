@@ -19,6 +19,20 @@
 .stack { display: grid; gap: var(--s-4); }
 .stack--lg { gap: var(--s-6); }
 .row { display: flex; gap: var(--s-3); align-items: center; flex-wrap: wrap; }
+.row--between { justify-content: space-between; }
+.row--top { align-items: start; }
+.row--sm { gap: var(--s-2); }
+.row--mt-4 { margin-top: var(--s-4); }
+.row--mt-5 { margin-top: var(--s-5); }
+.stack--gap-10 { gap: 10px; }
+.stack--gap-3 { gap: var(--s-3); }
+.stack--gap-4 { gap: var(--s-4); }
+.stack--mt-5 { margin-top: var(--s-5); }
+.title-inline { margin: 0; font-family: var(--font-serif); letter-spacing: -0.02em; }
+.dashboard-grid--single { grid-template-columns: 1fr; gap: var(--s-3); }
+.text-muted { color: var(--muted); }
+.text-13 { font-size: 13px; }
+.link-dim { color: var(--dim); font-weight: 700; }
 .split { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: clamp(16px, 3vw, 28px); align-items: start; }
 @media (max-width: 920px) { .split { grid-template-columns: 1fr; } }
 

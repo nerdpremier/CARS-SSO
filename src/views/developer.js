@@ -57,8 +57,8 @@ export async function renderDeveloper({ outlet } = {}) {
       <div class="split">
         <div class="card">
           <div class="card__inner stack">
-            <div class="row" style="justify-content: space-between; align-items: start;">
-              <div class="stack" style="gap: 10px;">
+            <div class="row row--between row--top">
+              <div class="stack stack--gap-10">
                 <span class="badge">
                   <svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#i-link"></use></svg>
                   <span>พอร์ทัลนักพัฒนา</span>
@@ -91,16 +91,16 @@ export async function renderDeveloper({ outlet } = {}) {
               </button>
             </div>
 
-            <div id="panel" class="stack" style="gap: var(--s-4);"></div>
+            <div id="panel" class="stack stack--gap-4"></div>
           </div>
         </div>
 
         <div class="card">
           <div class="card__inner stack">
-            <h2 style="margin:0; font-family: var(--font-serif); letter-spacing: -0.02em;">OAuth Apps</h2>
+            <h2 class="title-inline">OAuth Apps</h2>
             <p class="help">อ้างอิง endpoint เดิมของระบบ: <span class="mono">/api/oauth/clients</span></p>
 
-            <div class="stack" style="gap: var(--s-3);">
+            <div class="stack stack--gap-3">
               <div class="field">
                 <label class="label" for="app-name">ชื่อแอป</label>
                 <input class="input" id="app-name" placeholder="เช่น My Website" maxlength="128" />
@@ -116,7 +116,7 @@ export async function renderDeveloper({ outlet } = {}) {
               </button>
             </div>
 
-            <div id="apps" class="stack" style="gap: var(--s-3); margin-top: var(--s-5);">
+            <div id="apps" class="stack stack--gap-3 stack--mt-5">
               <div class="empty">กำลังโหลดแอป…</div>
             </div>
           </div>
@@ -141,7 +141,7 @@ export async function renderDeveloper({ outlet } = {}) {
           <div class="status__title">API Keys (UI พร้อมต่อ backend)</div>
           <div>ตอนนี้ backend สำหรับ API keys ยังไม่พบใน repo จึงแสดงเป็นโครงหน้าแบบ production ที่พร้อมเสียบ endpoint</div>
         </div>
-        <div class="row" style="justify-content: space-between;">
+        <div class="row row--between">
           <span class="badge"><span class="mono">Scope</span><span>read:logs, manage:keys</span></span>
           <button class="btn" type="button" id="btn-gen-key">
             <svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#i-key"></use></svg>

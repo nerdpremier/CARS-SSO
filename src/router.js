@@ -44,7 +44,7 @@ export async function renderRoute() {
   const pathname = window.location.pathname || "/";
   const r = match(pathname);
   if (!r) {
-    outlet.innerHTML = `<div class="card"><div class="card__inner"><h1 class="card__title">ไม่พบหน้า</h1><p class="card__subtitle">URL นี้ไม่มีอยู่ในระบบ</p><div class="row" style="margin-top: var(--s-5)"><a class="btn btn--ghost" href="/login" data-link>กลับไปเข้าสู่ระบบ</a></div></div></div>`;
+    outlet.innerHTML = `<div class="card"><div class="card__inner"><h1 class="card__title">ไม่พบหน้า</h1><p class="card__subtitle">URL นี้ไม่มีอยู่ในระบบ</p><div class="row row--mt-5"><a class="btn btn--ghost" href="/login" data-link>กลับไปเข้าสู่ระบบ</a></div></div></div>`;
     outlet.setAttribute("aria-busy", "false");
     return;
   }
@@ -57,7 +57,7 @@ export async function renderRoute() {
       title: "โหลดหน้าไม่สำเร็จ",
       message: err?.message ? String(err.message) : "เกิดข้อผิดพลาดไม่ทราบสาเหตุ",
     });
-    outlet.innerHTML = `<div class="card"><div class="card__inner"><h1 class="card__title">เกิดข้อผิดพลาด</h1><p class="card__subtitle">ลองรีเฟรช หรือกลับไปหน้าเข้าสู่ระบบ</p><div class="row" style="margin-top: var(--s-5)"><a class="btn btn--ghost" href="/login" data-link>เข้าสู่ระบบ</a></div></div></div>`;
+    outlet.innerHTML = `<div class="card"><div class="card__inner"><h1 class="card__title">เกิดข้อผิดพลาด</h1><p class="card__subtitle">ลองรีเฟรช หรือกลับไปหน้าเข้าสู่ระบบ</p><div class="row row--mt-5"><a class="btn btn--ghost" href="/login" data-link>เข้าสู่ระบบ</a></div></div></div>`;
   } finally {
     outlet.setAttribute("aria-busy", "false");
   }

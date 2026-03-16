@@ -33,7 +33,7 @@ export async function renderWelcome({ outlet } = {}) {
             <h1 class="card__title">ยินดีต้อนรับ</h1>
             <p class="card__subtitle">คุณเข้าสู่ระบบแล้วในฐานะ <span class="mono">${escapeHtml(session.user || "ผู้ใช้")}</span></p>
 
-            <div class="row" style="margin-top: var(--s-4);">
+            <div class="row row--mt-4">
               <a class="btn" href="/developer" data-link>
                 <svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#i-link"></use></svg>
                 <span>เปิดพอร์ทัลนักพัฒนา</span>
@@ -48,8 +48,8 @@ export async function renderWelcome({ outlet } = {}) {
 
         <div class="card">
           <div class="card__inner stack">
-            <h2 style="margin:0; font-family: var(--font-serif); letter-spacing: -0.02em;">ภาพรวมความปลอดภัย</h2>
-            <div class="dashboard-grid" style="grid-template-columns: 1fr; gap: var(--s-3);">
+            <h2 class="title-inline">ภาพรวมความปลอดภัย</h2>
+            <div class="dashboard-grid dashboard-grid--single">
               <div class="metric">
                 <div class="metric__label">นโยบาย</div>
                 <div class="metric__value">Adaptive MFA</div>

@@ -48,12 +48,12 @@ export async function renderMfa({ outlet } = {}) {
           <p class="hint">ถ้ายังไม่ได้รับอีเมล ให้ขอรหัสใหม่</p>
         </div>
 
-        <div class="row" style="justify-content: space-between; align-items: center;">
+        <div class="row row--between">
           <button class="btn btn--ghost" id="resend" type="button">
             <svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#i-rotate"></use></svg>
             <span>ส่งรหัสใหม่</span>
           </button>
-          <a href="/login" data-link style="color: var(--dim); font-weight: 700;">ยกเลิก</a>
+          <a href="/login" data-link class="link-dim">ยกเลิก</a>
         </div>
 
         <div class="auth-actions">

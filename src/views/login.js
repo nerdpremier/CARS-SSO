@@ -44,7 +44,7 @@ export async function renderLogin({ outlet } = {}) {
           <input class="input" id="password" name="password" type="password" autocomplete="current-password" maxlength="128" placeholder="รหัสผ่านของคุณ" required />
         </div>
 
-        <label class="row" style="gap: var(--s-2); color: var(--muted); font-size: 13px;">
+        <label class="row row--sm text-muted text-13">
           <input type="checkbox" id="remember" />
           <span>จดจำอุปกรณ์นี้ 30 วัน</span>
         </label>

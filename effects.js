@@ -5,10 +5,21 @@
 (function () {
   'use strict';
 
+  var REDUCE_MOTION = false;
+  try { REDUCE_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  catch { REDUCE_MOTION = false; }
+
+  // Tiny developer-friendly signature (subtle, professional)
+  try {
+    // eslint-disable-next-line no-console
+    console.log('%cCARS SSO%c — secure by design.', 'font-weight:700;color:#4F6EF7', 'color:#5A6A8A');
+  } catch { /* ignore */ }
+
   /* ══════════════════════════════════════════════════════════
      1.  INTERACTIVE CANVAS
      ══════════════════════════════════════════════════════════ */
   (function initCanvas() {
+    if (REDUCE_MOTION) return;
     var canvas = document.createElement('canvas');
     canvas.id = 'bg-canvas';
     canvas.setAttribute('aria-hidden', 'true');
@@ -245,6 +256,7 @@
      4.  BUTTON RIPPLE
      ══════════════════════════════════════════════════════════ */
   function ripple(btn, e) {
+    if (REDUCE_MOTION) return;
     var rect = btn.getBoundingClientRect();
     var size = Math.max(rect.width, rect.height) * 2.6;
     var cx   = e && e.clientX != null ? e.clientX - rect.left : rect.width  / 2;
@@ -269,5 +281,30 @@
       if (el && el.matches('.btn-primary,.btn-portal,.btn-signout,.btn-create')) ripple(el, null);
     }
   });
+
+  /* ══════════════════════════════════════════════════════════
+     5.  EASTER EGG (professional, non-distracting)
+     ══════════════════════════════════════════════════════════ */
+  (function konami() {
+    // Hidden and harmless: just a toast. No layout changes, no delays.
+    var seq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+    var i = 0;
+    document.addEventListener('keydown', function(e) {
+      var k = e.key;
+      if (k === seq[i]) i++;
+      else i = (k === seq[0]) ? 1 : 0;
+      if (i === seq.length) {
+        i = 0;
+        if (window.CarsToast) {
+          window.CarsToast({
+            type: 'success',
+            title: 'Security mode',
+            msg: 'Engaged. (You found the easter egg.)',
+            duration: 3200
+          });
+        }
+      }
+    });
+  })();
 
 }());

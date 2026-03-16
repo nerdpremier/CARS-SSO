@@ -131,6 +131,9 @@ async function createApp() {
     document.getElementById('input-name').value = '';
     document.getElementById('input-uri').value  = '';
     loadApps();
+    if (window.CarsToast) {
+      window.CarsToast({ type:'success', title:'App created', msg:'Credentials are shown once—save the secret now.', duration: 4200 });
+    }
   } catch { showCreateError('Unable to connect to server. Please try again.'); }
   finally { btn.disabled = false; btn.textContent = 'Create App'; }
 }
@@ -172,13 +175,21 @@ async function doRotate(clientId) {
   try {
     const res  = await apiFetch('/api/oauth/clients', { method:'PATCH', body:JSON.stringify({client_id:clientId}) });
     const data = await res.json();
-    if (!res.ok) { alert(data.error||'Rotation failed. Please try again.'); return; }
+    if (!res.ok) {
+      (window.CarsToast ? window.CarsToast({ type:'danger', title:'Rotate failed', msg: data.error || 'Please try again.' }) : alert(data.error||'Rotation failed. Please try again.'));
+      return;
+    }
     document.getElementById('res-client-id').textContent     = data.client_id;
     document.getElementById('res-client-secret').textContent = data.client_secret;
     document.getElementById('result-box').hidden = false;
     document.getElementById('result-box').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     loadApps();
-  } catch { alert('Unable to connect to server. Please try again.'); }
+    if (window.CarsToast) {
+      window.CarsToast({ type:'success', title:'Secret rotated', msg:'All prior tokens were revoked. Update your app config.', duration: 4200 });
+    }
+  } catch {
+    (window.CarsToast ? window.CarsToast({ type:'danger', title:'Network error', msg:'Unable to connect. Please try again.' }) : alert('Unable to connect to server. Please try again.'));
+  }
 }
 
 function askDelete(clientId, appName) {
@@ -197,9 +208,18 @@ async function confirmDelete() {
   btn.disabled = true; btn.textContent = 'Deleting…';
   try {
     const res = await apiFetch('/api/oauth/clients', { method:'DELETE', body:JSON.stringify({client_id:pendingDeleteId}) });
-    if (!res.ok) { const d=await res.json(); alert(d.error||'Delete failed. Please try again.'); return; }
+    if (!res.ok) {
+      const d=await res.json();
+      (window.CarsToast ? window.CarsToast({ type:'danger', title:'Delete failed', msg: d.error || 'Please try again.' }) : alert(d.error||'Delete failed. Please try again.'));
+      return;
+    }
     closeConfirm(); loadApps();
-  } catch { alert('Unable to connect to server. Please try again.'); }
+    if (window.CarsToast) {
+      window.CarsToast({ type:'success', title:'App deleted', msg:'All tokens were revoked immediately.', duration: 3200 });
+    }
+  } catch {
+    (window.CarsToast ? window.CarsToast({ type:'danger', title:'Network error', msg:'Unable to connect. Please try again.' }) : alert('Unable to connect to server. Please try again.'));
+  }
   finally { btn.disabled=false; btn.textContent='Delete'; }
 }
 

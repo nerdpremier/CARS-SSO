@@ -22,6 +22,7 @@ import { pool }             from '../lib/db.js';
 import { checkRateLimit }   from '../lib/rate-limit.js';
 import { getClientIp }      from '../lib/ip-utils.js';
 import { validateCsrfToken } from '../lib/csrf-utils.js';
+import { ensureLoginRisksSchema } from '../lib/risk-score.js';
 import {
     setSecurityHeaders, auditLog,
     USER_REGEX, SAFE_STRING_REGEX,
@@ -82,6 +83,8 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Invalid request data' });
         }
 
+        await ensureLoginRisksSchema();
+
         try {
             if (await checkRateLimit(`user:${username}:assess`, 20, 60_000)) {
                 auditLog('ASSESS_USERNAME_RATE_LIMIT', { username, ip });
@@ -137,10 +140,10 @@ export default async function handler(req, res) {
             let insertedId;
             try {
                 const insertRes = await client.query(
-                    `INSERT INTO login_risks (username, device, fingerprint, risk_level)
-                     VALUES ($1, $2, $3, $4)
+                    `INSERT INTO login_risks (username, device, fingerprint, risk_level, pre_login_score)
+                     VALUES ($1, $2, $3, $4, $5)
                      RETURNING id`,
-                    [username, device, fingerprint, level]
+                    [username, device, fingerprint, level, score]
                 );
                 insertedId = insertRes.rows[0]?.id;
                 await client.query('COMMIT');

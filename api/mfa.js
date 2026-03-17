@@ -26,6 +26,7 @@ import {
 import { hashMfaCode }         from '../lib/mfa-utils.js';
 import { validateRedirectBack } from '../lib/redirect-utils.js';
 import { mailTransporter }     from '../lib/mailer.js';
+import { ensureLoginRisksSchema } from '../lib/risk-score.js';
 import {
     setSecurityHeaders, auditLog,
     USER_REGEX, LOGID_STRING_REGEX,
@@ -78,6 +79,7 @@ export default async function handler(req, res) {
 }
 
 async function handleVerifyMfa(req, res, ip) {
+    await ensureLoginRisksSchema();
     try {
         if (await checkRateLimit(`ip:${ip}:verify-mfa`, 30, 60_000)) {
             auditLog('VERIFY_MFA_IP_RATE_LIMIT', { ip });
@@ -202,6 +204,18 @@ async function handleVerifyMfa(req, res, ip) {
                 await client.query('ROLLBACK');
                 console.error('[ERROR] mfa.js verify JWT sign failed:', jwtErr.message);
                 return res.status(500).json({ error: 'Internal server error' });
+            }
+
+            // ผูก login attempt record กับ session เพื่อให้ behavior.js ดึง pre_login_score มารวมคะแนนได้
+            try {
+                await client.query(
+                    `UPDATE login_risks
+                     SET session_jti = $1
+                     WHERE id = $2 AND username = $3`,
+                    [jti, parsedLogId, username]
+                );
+            } catch (linkErr) {
+                console.error('[WARN] mfa.js link session_jti failed:', linkErr.message);
             }
 
             await client.query('COMMIT');

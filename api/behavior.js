@@ -14,17 +14,13 @@
 //       }
 //
 // Contract กับ Railway engine:
-//   - POST ไปที่ process.env.RISK_ENGINE_URL ด้วย JSON:
-//       {
-//         username,         // จาก JWT session_token
-//         session_jti,      // jti จาก JWT
-//         ip,               // client IP ที่ SSO มองเห็น
-//         events, page, meta,
-//         ts: ISOString,    // เวลาที่ SSO รับ request
-//       }
+//   - POST ไปที่ process.env.RISK_ENGINE_URL (แนะนำให้ชี้ไปที่ /score)
+//     ด้วย JSON ของ BehaviorPayload
 //
 //   - engine ต้องตอบเป็น JSON:
-//       { action: 'low' | 'medium' | 'revoke' }
+//       { normalized: number, raw_score?: number }
+//
+//   - การตัดสิน action (low/medium/revoke) ทำที่ SSO จาก combined score เท่านั้น
 //
 //   - ถ้า engine ล่ม / timeout: เรา fail‑open เป็น action: 'low'
 //     เพื่อไม่ล็อก user ทั้งระบบเพราะปัญหาภายใน engine
@@ -43,6 +39,7 @@ import {
     isValidBody,
 } from '../lib/response-utils.js';
 import { pool }            from '../lib/db.js';
+import { ensureBehaviorRisksSchema, combineRisk, actionFromCombinedScore } from '../lib/risk-score.js';
 
 const ENGINE_URL        = process.env.RISK_ENGINE_URL;
 const ENGINE_API_KEY    = process.env.RISK_ENGINE_API_KEY;
@@ -157,6 +154,8 @@ export default async function handler(req, res) {
         return res.status(401).json({ action: 'revoke' });
     }
 
+    await ensureBehaviorRisksSchema();
+
     const { events, page, meta, features } = req.body;
 
     if (!Array.isArray(events) || events.length === 0) {
@@ -269,25 +268,69 @@ export default async function handler(req, res) {
             return res.status(200).json({ action: 'low' });
         }
 
-        const action = typeof engineData.action === 'string'
-            ? engineData.action.toLowerCase()
-            : 'low';
+        const behaviorScore = (engineData && typeof engineData.normalized === 'number')
+            ? engineData.normalized
+            : null;
 
-        if (!['low', 'medium', 'revoke'].includes(action)) {
-            console.error('[WARN] behavior.js: invalid engine action', engineData.action);
-            return res.status(200).json({ action: 'low' });
+        let preLoginScore = 0;
+        let combinedScore = null;
+        let combinedAction = 'low';
+
+        // ถ้าเป็น SSO session cookie เราสามารถผูกกับ login_risks ผ่าน session_jti เพื่อรวมคะแนน pre-login ได้
+        if (authType === 'session_cookie' && sessionJti) {
+            try {
+                const preRes = await pool.query(
+                    `SELECT id, pre_login_score
+                     FROM login_risks
+                     WHERE username = $1 AND session_jti = $2 AND is_success = TRUE
+                     ORDER BY created_at DESC
+                     LIMIT 1`,
+                    [username, sessionJti]
+                );
+                if (preRes.rows[0]) {
+                    preLoginScore = Number(preRes.rows[0].pre_login_score || 0);
+                    if (behaviorScore != null) {
+                        combinedScore = combineRisk(preLoginScore, behaviorScore);
+                        combinedAction = actionFromCombinedScore(combinedScore);
+                    }
+
+                    // เก็บ post-login score แยกตาราง
+                    try {
+                        await pool.query(
+                            `INSERT INTO behavior_risks
+                             (username, session_jti, behavior_score, engine_action, combined_score, combined_action)
+                             VALUES ($1, $2, $3, $4, $5, $6)`,
+                            [username, sessionJti, behaviorScore, null, combinedScore, combinedAction]
+                        );
+                    } catch (insErr) {
+                        console.error('[WARN] behavior.js behavior_risks insert failed:', insErr.message);
+                    }
+
+                    await pool.query(
+                        `UPDATE login_risks
+                         SET combined_score = $2,
+                             combined_action = $3,
+                             last_behavior_at = NOW(),
+                             behavior_samples = COALESCE(behavior_samples, 0) + 1
+                         WHERE id = $4`,
+                        [combinedScore, combinedAction, preRes.rows[0].id]
+                    );
+                }
+            } catch (scoreErr) {
+                console.error('[WARN] behavior.js combined score update failed:', scoreErr.message);
+            }
         }
 
         auditLog('BEHAVIOR_ENGINE_DECISION', {
             username,
             ip,
-            action,
+            action: combinedAction,
+            has_behavior_score: behaviorScore != null,
+            has_combined_score: combinedScore != null,
         });
 
-        // ถ้า risk engine ตัดสินใจ REVOKE → บันทึกลง revoked_tokens เฉพาะกรณีที่เป็น session cookie (มี JWT jti/exp)
-        if (action === 'revoke' && authType === 'session_cookie') {
-            // NOTE: sessionCookieToken ถูก verify แล้วด้านบน จึงต้องมี decoded-like fields แต่เราไม่เก็บ decoded ไว้เพื่อหลีกเลี่ยง log/accidental leak
-            // ใช้ sessionJti (decoded.jti) และ expire จาก JWT โดย decode แบบไม่ verify ซ้ำ: token มาจาก cookie เดิมที่ verify ผ่านแล้ว
+        // ถ้า combined ตัดสินใจ REVOKE → บันทึกลง revoked_tokens เฉพาะกรณีที่เป็น session cookie (มี JWT jti/exp)
+        if (combinedAction === 'revoke' && authType === 'session_cookie') {
             let exp = null;
             try {
                 const decodedUnsafe = jwt.decode(sessionCookieToken);
@@ -306,7 +349,7 @@ export default async function handler(req, res) {
             }
         }
 
-        return res.status(200).json({ action });
+        return res.status(200).json({ action: combinedAction });
     } catch (err) {
         console.error('[ERROR] behavior.js engine call failed:', err.message);
         // fail‑open: ไม่ทำให้ user หลุดออกเพราะ engine down

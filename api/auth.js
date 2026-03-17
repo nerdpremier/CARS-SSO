@@ -25,6 +25,7 @@ import { LOGID_TTL_MINUTES, TOTAL_MFA_MAX, SESSION_DURATION_SECONDS } from '../l
 import { hashMfaCode }         from '../lib/mfa-utils.js';
 import { mailTransporter }     from '../lib/mailer.js';
 import { validateRedirectBack } from '../lib/redirect-utils.js';
+import { ensureLoginRisksSchema } from '../lib/risk-score.js';
 import {
     setSecurityHeaders, auditLog,
     USER_REGEX, SAFE_STRING_REGEX, LOGID_STRING_REGEX,
@@ -287,6 +288,7 @@ export default async function handler(req, res) {
         // 🔑 LOGIN
         // ═══════════════════════════════════════════════════════
         if (action === 'login') {
+            await ensureLoginRisksSchema();
             if (typeof username !== 'string' || typeof password !== 'string') {
                 return res.status(400).json({ error: 'Invalid request data' });
             }
@@ -476,6 +478,18 @@ export default async function handler(req, res) {
                     await loginClient.query('ROLLBACK');
                     console.error('[ERROR] auth.js JWT sign failed:', jwtErr.message);
                     return res.status(500).json({ error: 'Internal server error' });
+                }
+
+                // ผูก login attempt record กับ session เพื่อให้ behavior.js ดึง pre_login_score มารวมคะแนนได้
+                try {
+                    await loginClient.query(
+                        `UPDATE login_risks
+                         SET session_jti = $1
+                         WHERE id = $2 AND username = $3`,
+                        [jti, parsedLogId, username]
+                    );
+                } catch (linkErr) {
+                    console.error('[WARN] auth.js link session_jti failed:', linkErr.message);
                 }
 
                 await loginClient.query('COMMIT');

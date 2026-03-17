@@ -19,6 +19,7 @@
     { "source": "/api/mfa",         "destination": "/api/mfa.js" },
     { "source": "/api/verify-mfa",  "destination": "/api/mfa.js?action=verify" },
     { "source": "/api/resend-mfa",  "destination": "/api/mfa.js?action=resend" },
+    { "source": "/api/stepup",      "destination": "/api/stepup.js" },
     { "source": "/api/password",    "destination": "/api/password.js" },
 
     { "source": "/",                "destination": "/login.html" },

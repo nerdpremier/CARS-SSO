@@ -26,6 +26,7 @@ import {
     isJsonContentType,
     isValidBody,
 } from '../lib/response-utils.js';
+import { ensureStepupChallengesSchema } from '../lib/risk-score.js';
 
 const OTP_REGEX = /^\d{6}$/;
 const STEPUP_TTL_MINUTES = 5;
@@ -41,31 +42,6 @@ function hashStepupCode(stepupId, code) {
         .createHmac('sha256', pepper)
         .update(`${stepupId}:${code}`)
         .digest('hex');
-}
-
-let _schemaEnsured = false;
-async function ensureStepupSchema() {
-    if (_schemaEnsured) return;
-    _schemaEnsured = true;
-    try {
-        await pool.query(
-            `CREATE TABLE IF NOT EXISTS stepup_challenges (
-                id UUID PRIMARY KEY,
-                username TEXT NOT NULL,
-                code_hash TEXT NOT NULL,
-                expires_at TIMESTAMPTZ NOT NULL,
-                attempts INTEGER NOT NULL DEFAULT 0,
-                verified_at TIMESTAMPTZ,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            )`
-        );
-    } catch { /* ignore */ }
-    try {
-        await pool.query(
-            `CREATE INDEX IF NOT EXISTS stepup_challenges_user_time_idx
-             ON stepup_challenges (username, created_at DESC)`
-        );
-    } catch { /* ignore */ }
 }
 
 async function requireBearerUser(req) {
@@ -120,7 +96,7 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    await ensureStepupSchema();
+    await ensureStepupChallengesSchema();
 
     const action = req.body.action;
     if (action === 'send') {

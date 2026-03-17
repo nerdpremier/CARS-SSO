@@ -333,9 +333,9 @@ export default async function handler(req, res) {
         try {
             await pool.query(
                 `INSERT INTO behavior_risks
-                 (request_id, username, session_jti, behavior_score, engine_action, combined_score, combined_action)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                [requestId, username, sessionJti || '', behaviorScore, null, combinedScore, combinedAction]
+                 (request_id, username, session_jti, behavior_score, combined_score, combined_action)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [requestId, username, sessionJti || '', behaviorScore, combinedScore, combinedAction]
             );
         } catch (insErr) {
             console.error('[WARN] behavior.js behavior_risks insert failed:', insErr.message);

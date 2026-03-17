@@ -276,8 +276,10 @@ export default async function handler(req, res) {
         let combinedScore = null;
         let combinedAction = 'low';
 
-        // ถ้าเป็น SSO session cookie เราสามารถผูกกับ login_risks ผ่าน session_jti เพื่อรวมคะแนน pre-login ได้
-        if (authType === 'session_cookie' && sessionJti) {
+        // พยายามดึง pre-login score ถ้ามี (เฉพาะ flow ที่ผูก session_jti กับ login_risks)
+        // หมายเหตุ: web customer ที่ auth ด้วย OAuth Bearer อาจไม่มี login_risks/session_jti แบบ JWT
+        let loginRiskId = null;
+        if (sessionJti) {
             try {
                 const preRes = await pool.query(
                     `SELECT id, pre_login_score
@@ -288,36 +290,51 @@ export default async function handler(req, res) {
                     [username, sessionJti]
                 );
                 if (preRes.rows[0]) {
+                    loginRiskId = preRes.rows[0].id;
                     preLoginScore = Number(preRes.rows[0].pre_login_score || 0);
-                    if (behaviorScore != null) {
-                        combinedScore = combineRisk(preLoginScore, behaviorScore);
-                        combinedAction = actionFromCombinedScore(combinedScore);
-                    }
-
-                    // เก็บ post-login score แยกตาราง
-                    try {
-                        await pool.query(
-                            `INSERT INTO behavior_risks
-                             (username, session_jti, behavior_score, engine_action, combined_score, combined_action)
-                             VALUES ($1, $2, $3, $4, $5, $6)`,
-                            [username, sessionJti, behaviorScore, null, combinedScore, combinedAction]
-                        );
-                    } catch (insErr) {
-                        console.error('[WARN] behavior.js behavior_risks insert failed:', insErr.message);
-                    }
-
-                    await pool.query(
-                        `UPDATE login_risks
-                         SET combined_score = $2,
-                             combined_action = $3,
-                             last_behavior_at = NOW(),
-                             behavior_samples = COALESCE(behavior_samples, 0) + 1
-                         WHERE id = $4`,
-                        [combinedScore, combinedAction, preRes.rows[0].id]
-                    );
                 }
-            } catch (scoreErr) {
-                console.error('[WARN] behavior.js combined score update failed:', scoreErr.message);
+            } catch (preErr) {
+                console.error('[WARN] behavior.js pre-login lookup failed:', preErr.message);
+            }
+        }
+
+        // รวมคะแนนได้ก็ต่อเมื่อมี behaviorScore (จาก engine /score) และมี pre-login score
+        if (behaviorScore != null && loginRiskId != null) {
+            combinedScore = combineRisk(preLoginScore, behaviorScore);
+            combinedAction = actionFromCombinedScore(combinedScore);
+        } else {
+            // ถ้ายังรวมไม่ได้ ให้ fail-open เป็น low
+            combinedScore = null;
+            combinedAction = 'low';
+        }
+
+        // เก็บ post-login score แยกตาราง "เสมอ" (ทั้ง session_cookie และ oauth_bearer)
+        // เพื่อให้เห็นว่า SSO ได้รับ behavior แล้ว แม้ไม่มี pre-login record ให้ combine
+        try {
+            await pool.query(
+                `INSERT INTO behavior_risks
+                 (username, session_jti, behavior_score, engine_action, combined_score, combined_action)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [username, sessionJti || '', behaviorScore, null, combinedScore, combinedAction]
+            );
+        } catch (insErr) {
+            console.error('[WARN] behavior.js behavior_risks insert failed:', insErr.message);
+        }
+
+        // อัปเดตสรุปกลับไปที่ login_risks เฉพาะเมื่อหา record เจอ
+        if (loginRiskId != null) {
+            try {
+                await pool.query(
+                    `UPDATE login_risks
+                     SET combined_score = $1,
+                         combined_action = $2,
+                         last_behavior_at = NOW(),
+                         behavior_samples = COALESCE(behavior_samples, 0) + 1
+                     WHERE id = $3`,
+                    [combinedScore, combinedAction, loginRiskId]
+                );
+            } catch (updErr) {
+                console.error('[WARN] behavior.js login_risks summary update failed:', updErr.message);
             }
         }
 

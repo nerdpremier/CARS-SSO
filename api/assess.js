@@ -23,11 +23,16 @@ import { checkRateLimit }   from '../lib/rate-limit.js';
 import { getClientIp }      from '../lib/ip-utils.js';
 import { validateCsrfToken } from '../lib/csrf-utils.js';
 import { ensureLoginRisksSchema } from '../lib/risk-score.js';
+import crypto from 'crypto';
 import {
     setSecurityHeaders, auditLog,
     USER_REGEX, SAFE_STRING_REGEX,
     isJsonContentType, isValidBody,
 } from '../lib/response-utils.js';
+
+function hashToken(token) {
+    return crypto.createHash('sha256').update(token).digest('hex');
+}
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).send();
@@ -38,8 +43,34 @@ export default async function handler(req, res) {
         return res.status(415).json({ error: 'Content-Type must be application/json' });
     }
 
-    if (!validateCsrfToken(req)) {
-        return res.status(403).json({ error: 'Invalid CSRF token' });
+    // Support both same-origin CSRF-protected calls AND OAuth Bearer calls from customer apps.
+    const authHeader = req.headers.authorization;
+    let bearerUsername = null;
+    if (authHeader?.startsWith?.('Bearer ')) {
+        const token = authHeader.slice(7).trim();
+        if (token && token.length <= 128) {
+            try {
+                const result = await pool.query(
+                    `SELECT ot.username, ot.expires_at, ot.revoked_at
+                     FROM oauth_tokens ot
+                     WHERE ot.token_hash = $1 AND ot.token_type = 'access'`,
+                    [hashToken(token)]
+                );
+                const row = result.rows[0];
+                if (row && !row.revoked_at && new Date() <= new Date(row.expires_at)) {
+                    bearerUsername = row.username;
+                }
+            } catch (err) {
+                console.error('[WARN] assess.js bearer lookup failed:', err.message);
+            }
+        }
+    }
+
+    // If no valid bearer session, require CSRF (same-origin SSO flow)
+    if (!bearerUsername) {
+        if (!validateCsrfToken(req)) {
+            return res.status(403).json({ error: 'Invalid CSRF token' });
+        }
     }
 
     try {
@@ -69,6 +100,11 @@ export default async function handler(req, res) {
         }
         if (!USER_REGEX.test(username)) {
             return res.status(400).json({ error: 'Invalid request data' });
+        }
+
+        // Bearer flow must only assess its own subject (prevent probing other usernames)
+        if (bearerUsername && bearerUsername !== username) {
+            return res.status(403).json({ error: 'Forbidden' });
         }
         if (typeof device !== 'string' || !device || device.length > 256) {
             return res.status(400).json({ error: 'Invalid request data' });

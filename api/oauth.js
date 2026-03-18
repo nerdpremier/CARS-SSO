@@ -52,9 +52,6 @@ function parseScope(scopeStr, allowedScopes = [...VALID_SCOPES]) {
     return allowed.length > 0 ? allowed : DEFAULT_SCOPE;
 }
 
-
-
-
 // hashToken: SHA-256 สำหรับ high-entropy random token
 // ไม่ต้องการ salt เพราะ 256-bit random input ทำ preimage attack ไม่คุ้มค่า
 function hashToken(token) {

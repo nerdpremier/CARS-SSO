@@ -198,7 +198,7 @@ async function handleVerifyMfa(req, res, ip) {
                 token = jwt.sign(
                     { username, jti, iss: 'auth-service', aud: 'api' },
                     process.env.JWT_SECRET,
-                    { expiresIn: '8h' }
+                    { expiresIn: '2h' }
                 );
             } catch (jwtErr) {
                 await client.query('ROLLBACK');

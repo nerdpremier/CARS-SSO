@@ -472,7 +472,7 @@ export default async function handler(req, res) {
                     token = jwt.sign(
                         { username, jti, iss: 'auth-service', aud: 'api' },
                         process.env.JWT_SECRET,
-                        { expiresIn: '8h' }
+                        { expiresIn: '2h' }
                     );
                 } catch (jwtErr) {
                     await loginClient.query('ROLLBACK');

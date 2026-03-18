@@ -52,35 +52,35 @@
     {
       "source": "/(.*\\.html)",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "upgrade-insecure-requests; default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'" },
+        { "key": "Content-Security-Policy", "value": "upgrade-insecure-requests; default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'" },
         { "key": "Cache-Control",           "value": "no-store" }
       ]
     },
     {
       "source": "/(|login|register|mfa|welcome|forgot-password|reset-password)",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "upgrade-insecure-requests; default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'" },
+        { "key": "Content-Security-Policy", "value": "upgrade-insecure-requests; default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'" },
         { "key": "Cache-Control",           "value": "no-store" }
       ]
     },
     {
       "source": "/front-logout",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "upgrade-insecure-requests; default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'" },
+        { "key": "Content-Security-Policy", "value": "upgrade-insecure-requests; default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'" },
         { "key": "Cache-Control",           "value": "no-store" }
       ]
     },
     {
       "source": "/oauth/authorize",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "upgrade-insecure-requests; default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'" },
+        { "key": "Content-Security-Policy", "value": "upgrade-insecure-requests; default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'" },
         { "key": "Cache-Control",           "value": "no-store" }
       ]
     },
     {
       "source": "/developer",
       "headers": [
-        { "key": "Content-Security-Policy", "value": "upgrade-insecure-requests; default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'" },
+        { "key": "Content-Security-Policy", "value": "upgrade-insecure-requests; default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'" },
         { "key": "Cache-Control",           "value": "no-store" }
       ]
     },

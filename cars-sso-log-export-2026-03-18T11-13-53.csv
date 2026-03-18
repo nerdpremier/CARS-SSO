@@ -1,0 +1,40 @@
+TimeUTC,timestampInMs,requestPath,requestMethod,requestQueryString,responseStatusCode,requestId,requestUserAgent,level,environment,branch,vercelCache,type,function,host,deploymentDomain,deploymentId,durationMs,region,maxMemoryUsed,memorySize,message,projectId,traceId,sessionId,invocationId,instanceId,concurrency
+2026-03-18 11:13:30,1773832410336,cars-sso.vercel.app/api/csrf,GET,,500,4fxcg-1773832410077-204cb47beac4,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",error,production,main,MISS,function,/api/csrf,cars-sso.vercel.app,cars-cqxpx90qc-nerdpremiers-projects.vercel.app,dpl_EwsR39LFKgJ7zArdGuVamhGb7u5X,,,,,"SyntaxError: Unexpected token '*'
+    at compileSourceTextModule (node:internal/modules/esm/utils:318:16)
+    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:111:18)
+    at #translate (node:internal/modules/esm/loader:473:20)
+    at afterLoad (node:internal/modules/esm/loader:529:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:534:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:571:36)
+    at afterResolve (node:internal/modules/esm/loader:624:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:630:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:143:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:228:17)
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.",prj_oROyVb78XBXLBKRkBgOMs4cu3Ycl,,,,,
+2026-03-18 11:13:30,1773832410077,cars-sso.vercel.app/api/csrf,GET,,500,4fxcg-1773832410077-204cb47beac4,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",,production,main,MISS,function,/api/csrf,cars-sso.vercel.app,cars-cqxpx90qc-nerdpremiers-projects.vercel.app,dpl_EwsR39LFKgJ7zArdGuVamhGb7u5X,127,iad1,-1,2048,,prj_oROyVb78XBXLBKRkBgOMs4cu3Ycl,,,01KM0AD52BX6H4XADC1YADCTRS,,-1
+2026-03-18 11:13:19,1773832399926,cars-sso.vercel.app/api/csrf,GET,,500,vs7wp-1773832399401-925f85ef6faa,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",error,production,main,MISS,function,/api/csrf,cars-sso.vercel.app,cars-sso.vercel.app,dpl_EwsR39LFKgJ7zArdGuVamhGb7u5X,,,,,"SyntaxError: Unexpected token '*'
+    at compileSourceTextModule (node:internal/modules/esm/utils:318:16)
+    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:111:18)
+    at #translate (node:internal/modules/esm/loader:473:20)
+    at afterLoad (node:internal/modules/esm/loader:529:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:534:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:571:36)
+    at afterResolve (node:internal/modules/esm/loader:624:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:630:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:143:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:228:17)
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.",prj_oROyVb78XBXLBKRkBgOMs4cu3Ycl,,,,,
+2026-03-18 11:13:19,1773832399401,cars-sso.vercel.app/api/csrf,GET,,500,vs7wp-1773832399401-925f85ef6faa,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",,production,main,MISS,function,/api/csrf,cars-sso.vercel.app,cars-sso.vercel.app,dpl_EwsR39LFKgJ7zArdGuVamhGb7u5X,146,iad1,-1,2048,,prj_oROyVb78XBXLBKRkBgOMs4cu3Ycl,,,01KM0ACTWQCJKGRTYHNGEVQGKN,,-1
+2026-03-18 11:13:10,1773832390053,cars-sso.vercel.app/api/csrf,GET,,500,ckjlx-1773832389497-a2f16284390c,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",error,production,main,MISS,function,/api/csrf,cars-sso.vercel.app,cars-sso.vercel.app,dpl_EwsR39LFKgJ7zArdGuVamhGb7u5X,,,,,"SyntaxError: Unexpected token '*'
+    at compileSourceTextModule (node:internal/modules/esm/utils:318:16)
+    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:111:18)
+    at #translate (node:internal/modules/esm/loader:473:20)
+    at afterLoad (node:internal/modules/esm/loader:529:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:534:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:571:36)
+    at afterResolve (node:internal/modules/esm/loader:624:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:630:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:143:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:228:17)
+Node.js process exited with exit status: 1. The logs above can help with debugging the issue.",prj_oROyVb78XBXLBKRkBgOMs4cu3Ycl,,,,,
+2026-03-18 11:13:09,1773832389497,cars-sso.vercel.app/api/csrf,GET,,500,ckjlx-1773832389497-a2f16284390c,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",,production,main,MISS,function,/api/csrf,cars-sso.vercel.app,cars-sso.vercel.app,dpl_EwsR39LFKgJ7zArdGuVamhGb7u5X,147,iad1,-1,2048,,prj_oROyVb78XBXLBKRkBgOMs4cu3Ycl,,,01KM0ACH83MP1Q5DK2A8V8QFWH,,-1

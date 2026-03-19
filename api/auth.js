@@ -502,7 +502,10 @@ export default async function handler(req, res) {
                             console.error('[WARN] auth.js SSO token insert failed:', ssoErr.message);
                         }
                     } else {
+                        // Fallback: redirect_back ไม่ valid → กลับไป authorize page
                         console.error('[WARN] auth.js: redirect_back not registered:', redirect_back);
+                        auditLog('LOGIN_REDIRECT_BACK_INVALID', { username, redirect_back, ip });
+                        redirectUrl = null; // ให้ไปที่ nextUrl (authorize page)
                     }
                 }
 

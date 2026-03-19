@@ -198,8 +198,14 @@ export default async function handler(req, res) {
             // ── Scoring logic ─────────────────────────────────
             // baseline 0.1 → +0.4 (device ใหม่) → +0.3 (fail > 3) → 1.0 (fail >= 5)
             // [FIX-OAUTH-FLOW] ถ้าเป็น OAuth flow จากเว็บลูกค้า → ลดความเสี่ยง
-            const isOAuthFlow = req.headers.referer?.includes('/oauth/authorize') || 
-                                req.headers.origin?.includes('cars-sso.vercel.app');
+            console.log('[DEBUG] assess.js req.body:', req.body);
+            console.log('[DEBUG] assess.js req.body.next:', req.body.next);
+            
+            const isOAuthFlow = req.body.next && 
+                                typeof req.body.next === 'string' && 
+                                req.body.next.includes('/oauth/authorize');
+            
+            console.log('[DEBUG] assess.js isOAuthFlow:', isOAuthFlow);
             
             let score = 0.1;
             if (!fp_match && !isOAuthFlow) score += 0.4; // device ใหม่ แต่ไม่ใช่ OAuth → +0.4

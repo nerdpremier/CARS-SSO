@@ -262,7 +262,8 @@ async function preLoginCheck() {
                 method:'POST',
                 body:JSON.stringify({
                     username,device,fingerprint,
-                    reuse_log_id: storedLogId
+                    reuse_log_id: storedLogId,
+                    next: nextUrl // [FIX-OAUTH-FLOW] ส่ง next เพื่อ detect OAuth
                 })
             });
             // Clear stored credentials after use
@@ -272,7 +273,10 @@ async function preLoginCheck() {
             // Create new risk assessment
             riskRes = await secureFetch('/api/assess',{
                 method:'POST',
-                body:JSON.stringify({username,device,fingerprint})
+                body:JSON.stringify({
+                    username,device,fingerprint,
+                    next: nextUrl // [FIX-OAUTH-FLOW] ส่ง next เพื่อ detect OAuth
+                })
             });
         }
         

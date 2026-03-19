@@ -206,7 +206,7 @@ export default async function handler(req, res) {
             if (!fp_match && !isOAuthFlow) score += 0.4; // device ใหม่ แต่ไม่ใช่ OAuth → +0.4
             if (isOAuthFlow) {
                 // OAuth flow จากเว็บลูกค้า → ถือว่า trusted
-                score = 0.1; // ต่ำกว่า threshold MEDIUM (0.4) เพื่อให้เป็น LOW
+                score = 0.3; // ต่ำกว่า threshold MEDIUM (0.4) เพื่อให้เป็น LOW
             }
             if (currentAttempt > 3)  score += 0.3;
             if (currentAttempt >= 5) score  = 1.0;

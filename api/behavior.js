@@ -279,6 +279,9 @@ export default async function handler(req, res) {
         let combinedAction = 'low';
 
         const preLoginLogId = req.body?.pre_login_log_id;
+        console.log('[DEBUG] behavior.js preLoginLogId:', preLoginLogId);
+        console.log('[DEBUG] behavior.js sessionJti:', sessionJti);
+        console.log('[DEBUG] behavior.js username:', username);
 
         // พยายามดึง pre-login score ถ้ามี
         let loginRiskId = null;
@@ -298,6 +301,9 @@ export default async function handler(req, res) {
                 if (byId.rows[0]) {
                     loginRiskId = byId.rows[0].id;
                     preLoginScore = Number(byId.rows[0].pre_login_score || 0);
+                    console.log('[DEBUG] behavior.js found loginRiskId by preLoginLogId:', loginRiskId);
+                } else {
+                    console.log('[DEBUG] behavior.js preLoginLogId lookup returned no rows');
                 }
             } else if (sessionJti) {
                 // fallback (เดิม): lookup ด้วย session_jti
@@ -312,6 +318,9 @@ export default async function handler(req, res) {
                 if (preRes.rows[0]) {
                     loginRiskId = preRes.rows[0].id;
                     preLoginScore = Number(preRes.rows[0].pre_login_score || 0);
+                    console.log('[DEBUG] behavior.js found loginRiskId by sessionJti:', loginRiskId);
+                } else {
+                    console.log('[DEBUG] behavior.js sessionJti lookup returned no rows');
                 }
             }
         } catch (preErr) {
@@ -342,9 +351,11 @@ export default async function handler(req, res) {
         }
 
         // อัปเดตสรุปกลับไปที่ login_risks เฉพาะเมื่อหา record เจอ
+        console.log('[DEBUG] behavior.js loginRiskId:', loginRiskId);
         if (loginRiskId != null) {
             try {
-                await pool.query(
+                console.log('[DEBUG] behavior.js updating login_risks with combined_score:', combinedScore);
+                const result = await pool.query(
                     `UPDATE login_risks
                      SET combined_score = $1,
                          combined_action = $2,
@@ -353,9 +364,12 @@ export default async function handler(req, res) {
                      WHERE id = $3`,
                     [combinedScore, combinedAction, loginRiskId]
                 );
+                console.log('[DEBUG] behavior.js login_risks update rowCount:', result.rowCount);
             } catch (updErr) {
                 console.error('[WARN] behavior.js login_risks summary update failed:', updErr.message);
             }
+        } else {
+            console.log('[DEBUG] behavior.js loginRiskId is null, skipping login_risks update');
         }
 
         auditLog('BEHAVIOR_ENGINE_DECISION', {

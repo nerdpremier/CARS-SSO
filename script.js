@@ -259,9 +259,10 @@ async function preLoginCheck() {
         const safeLogId = String(logIdNum);
 
         // [FIX-REDIRECT] ส่งเฉพาะ redirect_back (third-party SSO) ไปยัง auth API
-        // ไม่ส่ง nextUrl เพราะ validateRedirectBack() จะ reject URL ที่ไม่ใช่ registered redirect_uri
+        // [FIX-OAUTH-FLOW] ต้องส่ง nextUrl ด้วยเพื่อให้ auth.js ตรวจจับ OAuth flow
         const authBody = {action:'login',username,password,fingerprint,logId:safeLogId,remember};
         if (redirect_back) authBody.redirect_back = redirect_back;
+        if (nextUrl) authBody.next = nextUrl; // ส่ง nextUrl เพื่อ OAuth flow detection
 
         // Store logId in sessionStorage for potential OAuth flow reuse
         if (redirect_back) {

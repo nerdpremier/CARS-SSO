@@ -202,7 +202,7 @@ export default async function handler(req, res) {
                                 typeof req.body.next === 'string' && 
                                 req.body.next.includes('/oauth/authorize');
             
-            let score = 0.1;
+            let score = 0.3;
             if (!fp_match && !isOAuthFlow) score += 0.4; // device ใหม่ แต่ไม่ใช่ OAuth → +0.4
             if (isOAuthFlow) {
                 // OAuth flow จากเว็บลูกค้า → ถือว่า trusted

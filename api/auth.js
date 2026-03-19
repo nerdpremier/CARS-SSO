@@ -491,12 +491,19 @@ export default async function handler(req, res) {
                 if (redirect_back && user?.id) {
                     // [FIX-OAUTH-FLOW] ตรวจสอบว่ามี nextUrl ที่เป็น OAuth authorize หรือไม่
                     // ถ้ามี → เป็น OAuth flow → ไม่ต้องสร้าง SSO token
+                    console.log('[DEBUG] auth.js req.body.next:', req.body.next);
+                    console.log('[DEBUG] auth.js redirect_back:', redirect_back);
+                    console.log('[DEBUG] auth.js typeof req.body.next:', typeof req.body.next);
+                    
                     const hasOAuthFlow = req.body.next && 
                         typeof req.body.next === 'string' && 
                         req.body.next.includes('/oauth/authorize');
                     
+                    console.log('[DEBUG] auth.js hasOAuthFlow:', hasOAuthFlow);
+                    
                     if (!hasOAuthFlow) {
                         const isValidRedirect = await validateRedirectBack(redirect_back);
+                        console.log('[DEBUG] auth.js isValidRedirect:', isValidRedirect);
                         if (isValidRedirect) {
                             const sso_token = crypto.randomUUID();
                             try {
@@ -505,6 +512,7 @@ export default async function handler(req, res) {
                                     [sso_token, user.id]
                                 );
                                 redirectUrl = `${redirect_back}?sso_token=${sso_token}`;
+                                console.log('[DEBUG] auth.js created SSO redirectUrl:', redirectUrl);
                             } catch (ssoErr) {
                                 console.error('[WARN] auth.js SSO token insert failed:', ssoErr.message);
                             }
@@ -516,7 +524,7 @@ export default async function handler(req, res) {
                         }
                     } else {
                         // OAuth flow - ไม่สร้าง SSO token ให้ไปที่ authorize page
-                        console.log('[DEBUG] OAuth flow detected, skipping SSO token creation');
+                        console.log('[DEBUG] auth.js OAuth flow detected, skipping SSO token creation');
                         auditLog('LOGIN_OAUTH_FLOW_DETECTED', { username, redirect_back, ip });
                         redirectUrl = null;
                     }

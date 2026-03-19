@@ -4,6 +4,16 @@
 
 function safeNext() {
   try {
+    // [FIX-LOGOUT] ตรวจสอบว่ามี URL ที่เก็บไว้ก่อน logout หรือไม่
+    const postLogoutRedirect = sessionStorage.getItem('post_logout_redirect');
+    if (postLogoutRedirect) {
+      sessionStorage.removeItem('post_logout_redirect');
+      // สร้าง URL สำหรับ login พร้อม next=
+      const loginUrl = new URL('/login', window.location.origin);
+      loginUrl.searchParams.set('next', postLogoutRedirect);
+      return loginUrl.toString();
+    }
+    
     const sp = new URLSearchParams(window.location.search);
     const next = sp.get('next');
     if (!next) return '/login';

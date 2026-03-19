@@ -203,5 +203,17 @@ function handleDeny() {
 document.addEventListener('DOMContentLoaded', () => {
   $id('btn-allow')?.addEventListener('click', handleAllow);
   $id('btn-deny')?.addEventListener('click',  handleDeny);
+  
+  // [FIX-LOGOUT] เก็บ OAuth URL ไว้ก่อน logout เพื่อกลับมาต่อ flow ได้
+  const signOutLink = document.querySelector('a[href="/logout"]');
+  if (signOutLink) {
+    signOutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      // เก็บ current URL (authorize page พร้อม OAuth params) ไว้ใน sessionStorage
+      sessionStorage.setItem('post_logout_redirect', window.location.href);
+      window.location.href = '/logout';
+    });
+  }
+  
   init();
 });

@@ -513,7 +513,7 @@ async function handleAuthorize(req, res, ip) {
             return res.status(500).json({ error: 'Internal server error' });
         }
 
-        auditLog('OAUTH_CODE_ISSUED', { username: decoded.username, clientId: client_id, scope: effectiveScope, ip, preLoginLogId });
+        auditLog('OAUTH_CODE_ISSUED', { username: decoded.username, clientId: client_id, scope: effectiveScope, ip, preLoginLogId: pre_login_log_id });
 
         const redirectUrl = new URL(redirect_uri);
         redirectUrl.searchParams.set('code', code);

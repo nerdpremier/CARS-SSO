@@ -372,6 +372,28 @@ export default async function handler(req, res) {
         if (behaviorScore != null && loginRiskId != null) {
             combinedScore = combineRisk(preLoginScore, behaviorScore);
             combinedAction = actionFromCombinedScore(combinedScore);
+            
+            // ── Escalation Logic: ถ้าโดน Medium ครบ 3 ครั้งใน session นี้ ให้ครั้งถัดไปเป็น Revoke ทันที ──
+            if (combinedAction === 'medium' && sessionJti) {
+                try {
+                    const mediumCountRes = await pool.query(
+                        `SELECT COUNT(*)::int AS cnt
+                         FROM behavior_risks
+                         WHERE username = $1 
+                           AND session_jti = $2 
+                           AND combined_action = 'medium'
+                           AND created_at > NOW() - INTERVAL '8 hours'`,
+                        [username, sessionJti]
+                    );
+                    const mediumCount = mediumCountRes.rows[0]?.cnt || 0;
+                    
+                    if (mediumCount >= 3) {
+                        combinedAction = 'revoke';
+                    }
+                } catch (cntErr) {
+                    console.error('[WARN] behavior.js medium count failed:', cntErr.message);
+                }
+            }
         } else {
             // ถ้ายังรวมไม่ได้ ให้ fail-open เป็น low
             combinedScore = null;

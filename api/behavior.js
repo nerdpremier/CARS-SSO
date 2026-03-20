@@ -387,22 +387,37 @@ export default async function handler(req, res) {
             has_combined_score: combinedScore != null,
         });
 
-        // ถ้า combined ตัดสินใจ REVOKE → บันทึกลง revoked_tokens เฉพาะกรณีที่เป็น session cookie (มี JWT jti/exp)
-        if (combinedAction === 'revoke' && authType === 'session_cookie') {
-            let exp = null;
-            try {
-                const decodedUnsafe = jwt.decode(sessionCookieToken);
-                exp = decodedUnsafe && typeof decodedUnsafe.exp === 'number' ? decodedUnsafe.exp : null;
-            } catch { /* ignore */ }
-            if (sessionJti && exp) {
+        // ถ้า combined ตัดสินใจ REVOKE → บันทึกลง revoked_tokens (สำหรับ session) หรือ oauth_tokens (สำหรับ bearer)
+        if (combinedAction === 'revoke') {
+            if (authType === 'session_cookie') {
+                let exp = null;
                 try {
-                    const expiresAt = new Date(exp * 1000).toISOString();
-                    await pool.query(
-                        'INSERT INTO revoked_tokens (jti, expires_at) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-                        [sessionJti, expiresAt]
-                    );
+                    const decodedUnsafe = jwt.decode(sessionCookieToken);
+                    exp = decodedUnsafe && typeof decodedUnsafe.exp === 'number' ? decodedUnsafe.exp : null;
+                } catch { /* ignore */ }
+                if (sessionJti && exp) {
+                    try {
+                        const expiresAt = new Date(exp * 1000).toISOString();
+                        await pool.query(
+                            'INSERT INTO revoked_tokens (jti, expires_at) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+                            [sessionJti, expiresAt]
+                        );
+                    } catch (dbErr) {
+                        console.error('[WARN] behavior.js revoke insert failed:', dbErr.message);
+                    }
+                }
+            } else if (authType === 'oauth_bearer' && sessionJti) {
+                try {
+                    // sessionJti is `oauth:${row.id}`
+                    const oauthTokenId = sessionJti.split(':')[1];
+                    if (oauthTokenId) {
+                        await pool.query(
+                            'UPDATE oauth_tokens SET revoked_at = NOW() WHERE id = $1 AND revoked_at IS NULL',
+                            [oauthTokenId]
+                        );
+                    }
                 } catch (dbErr) {
-                    console.error('[WARN] behavior.js revoke insert failed:', dbErr.message);
+                    console.error('[WARN] behavior.js oauth revoke update failed:', dbErr.message);
                 }
             }
         }

@@ -114,12 +114,12 @@ const PASSWORD_RULES = [
 function checkPasswordStrength(password) {
     PASSWORD_RULES.forEach(({ id, test, label }) => {
         const el = document.getElementById(id); if (!el) return;
-        const icon = el.querySelector('.rule-icon');
+        const icon = el.querySelector('.rule-icon i');
         const pass = test(password);
         el.classList.toggle('pass', pass);
         el.setAttribute('aria-label', `${pass?'Met':'Not met'}: ${label}`);
         if (icon) {
-            icon.className = 'rule-icon fas ' + (pass ? 'fa-check' : 'fa-times');
+            icon.className = 'fas ' + (pass ? 'fa-check' : 'fa-times');
         }
     });
 }
@@ -156,7 +156,11 @@ async function handleRegister() {
     }
     
     try {
-        const res  = await secureFetch('/api/auth',{method:'POST',body:JSON.stringify({action:'register',username,email,password})});
+        const reqBody = {action:'register',username,email,password};
+        if (nextUrl) reqBody.next = nextUrl;
+        if (redirectBack) reqBody.redirect_back = redirectBack;
+        
+        const res  = await secureFetch('/api/auth',{method:'POST',body:JSON.stringify(reqBody)});
         const data = await res.json();
         if (res.ok) {
             if (data.email_verification) {

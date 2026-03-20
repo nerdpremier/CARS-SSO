@@ -112,7 +112,10 @@ export default async function handler(req, res) {
                 await client.query('COMMIT');
 
                 auditLog('VERIFY_EMAIL_SUCCESS', { userId: row.user_id, ip });
-                return res.redirect('/login?verified=1');
+                let redirectQuery = '?verified=1';
+                if (req.query.next) redirectQuery += `&next=${encodeURIComponent(req.query.next)}`;
+                if (req.query.redirect_back) redirectQuery += `&redirect_back=${encodeURIComponent(req.query.redirect_back)}`;
+                return res.redirect('/login' + redirectQuery);
 
             } catch (err) {
                 try { await client.query('ROLLBACK'); } catch { /* ignore */ }
@@ -181,7 +184,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid request data' });
     }
 
-    const { action, username, email, password, fingerprint, logId, remember, redirect_back } = req.body;
+    const { action, username, email, password, fingerprint, logId, remember, redirect_back, next: nextParam } = req.body;
     if (!action || typeof action !== 'string' || action.length > 16) {
         return res.status(400).json({ error: 'Invalid action' });
     }
@@ -262,7 +265,13 @@ export default async function handler(req, res) {
             // ส่ง verification email — await เพื่อให้ Vercel ไม่ตัด connection ก่อน email ส่งเสร็จ
             if (verifyInserted) {
                 const baseUrl     = process.env.BASE_URL;
-                const verifyLink  = `${baseUrl}/api/auth?action=verify-email&token=${rawVerifyToken}`;
+                const vUrl        = new URL(`${baseUrl}/api/auth`);
+                vUrl.searchParams.set('action', 'verify-email');
+                vUrl.searchParams.set('token', rawVerifyToken);
+                if (nextParam) vUrl.searchParams.set('next', nextParam);
+                if (redirect_back) vUrl.searchParams.set('redirect_back', redirect_back);
+                const verifyLink  = vUrl.toString();
+                
                 try {
                     await mailTransporter.sendMail({
                         from:    `"CARS SSO" <${process.env.EMAIL_USER}>`,

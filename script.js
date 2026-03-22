@@ -114,13 +114,9 @@ const PASSWORD_RULES = [
 function checkPasswordStrength(password) {
     PASSWORD_RULES.forEach(({ id, test, label }) => {
         const el = document.getElementById(id); if (!el) return;
-        const icon = el.querySelector('.rule-icon i');
         const pass = test(password);
         el.classList.toggle('pass', pass);
         el.setAttribute('aria-label', `${pass?'Met':'Not met'}: ${label}`);
-        if (icon) {
-            icon.className = 'fas ' + (pass ? 'fa-check' : 'fa-times');
-        }
     });
 }
 

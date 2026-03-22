@@ -182,12 +182,10 @@
     }
     return _tc;
   }
-  var ICONS = { success: 'fas fa-check', danger: 'fas fa-exclamation-triangle', warning: 'fas fa-bell', info: 'fas fa-info-circle' };
   window.CarsToast = function (opts) {
     var type = opts.type || 'info';
     var dur = opts.duration != null ? opts.duration : 4000;
     var t = document.createElement('div'); t.className = 'toast toast--' + type; t.setAttribute('role', 'alert');
-    var ic = document.createElement('i'); ic.className = 'toast-icon ' + (ICONS[type] || 'fas fa-info-circle'); ic.setAttribute('aria-hidden', 'true');
     var bd = document.createElement('div'); bd.className = 'toast-body';
     if (opts.title) {
       var tt = document.createElement('div'); tt.className = 'toast-title'; tt.textContent = opts.title; bd.appendChild(tt);
@@ -195,7 +193,7 @@
     var mm = document.createElement('div'); mm.className = 'toast-msg'; mm.textContent = opts.msg; bd.appendChild(mm);
     var cl = document.createElement('button'); cl.className = 'toast-close'; cl.setAttribute('aria-label', 'Dismiss'); cl.textContent = '×';
     var pr = document.createElement('div'); pr.className = 'toast-progress';
-    t.appendChild(ic); t.appendChild(bd); t.appendChild(cl); t.appendChild(pr);
+    t.appendChild(bd); t.appendChild(cl); t.appendChild(pr);
     getTC().appendChild(t);
     var timer = null;
     function dismiss() {

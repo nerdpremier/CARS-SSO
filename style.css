@@ -143,7 +143,6 @@ body.page-exit .portal-wrap { animation: pageOut .28s cubic-bezier(.4,0,1,1) for
 .toast--danger::before  { background: var(--err); }
 .toast--warning::before { background: var(--warn); }
 .toast--exit { animation: toastOut .24s ease forwards; }
-.toast-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
 .toast-body { flex: 1; }
 .toast-title { font-weight: 700; margin-bottom: 2px; }
 .toast-msg   { font-size: 12.5px; color: var(--muted); }
@@ -275,19 +274,12 @@ body.page-exit .portal-wrap { animation: pageOut .28s cubic-bezier(.4,0,1,1) for
   display: flex; align-items: center; gap: 10px; margin-bottom: 22px;
 }
 .brand-row--centered { justify-content: center; }
-.brand-logo {
-  width: 36px; height: 36px; background: var(--accent-l);
-  border: 1.5px solid rgba(79,110,247,.2); border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 17px; flex-shrink: 0;
-}
 .brand-name {
   font-family: var(--font-head); font-size: 16px;
   color: var(--ink); letter-spacing: -.01em;
 }
 
 /* Page title */
-.page-icon { display: block; font-size: 32px; margin-bottom: 12px; }
 .page-title {
   font-family: var(--font-head); font-size: 24px;
   color: var(--ink); letter-spacing: -.4px;
@@ -340,7 +332,6 @@ body.page-exit .portal-wrap { animation: pageOut .28s cubic-bezier(.4,0,1,1) for
 }
 .rule { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--dim); font-weight: 500; transition: color .2s; }
 .rule.pass { color: var(--ok); }
-.rule-icon { font-size: 11px; font-family: var(--font-mono); flex-shrink: 0; }
 
 
 /* ═══════════════════════════════════════════════════════════
@@ -430,7 +421,6 @@ body.page-exit .portal-wrap { animation: pageOut .28s cubic-bezier(.4,0,1,1) for
 /* ═══════════════════════════════════════════════════════════
    14. WELCOME PAGE
    ═══════════════════════════════════════════════════════════ */
-.welcome-check { font-size: 42px; margin-bottom: 14px; color: var(--ok); display: block; animation: countUp .6s cubic-bezier(.16,1,.3,1) .2s both; }
 .welcome-user { font-size: 14px; color: var(--muted); margin-bottom: 26px; }
 .welcome-user strong { font-weight: 700; color: var(--accent); }
 .session-badge { display: inline-flex; align-items: center; gap: 7px; background: var(--ok-bg); border: 1.5px solid var(--ok-bd); border-radius: 20px; padding: 5px 13px 5px 9px; font-size: 12px; font-weight: 600; color: #065F46; margin-bottom: 14px; }
@@ -454,7 +444,6 @@ body.page-exit .portal-wrap { animation: pageOut .28s cubic-bezier(.4,0,1,1) for
 .permission-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); transition: background .15s; }
 .permission-item:hover { background: rgba(79,110,247,.03); }
 .permission-item:last-child { border-bottom: none; }
-.permission-icon { font-size: 18px; flex-shrink: 0; }
 .permission-name { font-size: 13.5px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
 .permission-desc { font-size: 12px; color: var(--muted); }
 .scope-note { font-size: 12px; color: var(--dim); margin-bottom: 18px; }
@@ -468,7 +457,6 @@ body.page-exit .portal-wrap { animation: pageOut .28s cubic-bezier(.4,0,1,1) for
 .footer-signed a { color: var(--accent); font-weight: 600; text-decoration: none; }
 .footer-signed a:hover { text-decoration: underline; }
 .authorize-error-ui   { text-align: center; }
-.authorize-error-icon { font-size: 34px; margin-bottom: 14px; }
 .authorize-error-note { font-size: 13.5px; color: var(--muted); }
 
 /* MFA การยืนยันตัวตน */

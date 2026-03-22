@@ -1,24 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; form-action 'self'; base-uri 'none';">
+    content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; form-action 'self'; base-uri 'none';">
   <title>Welcome — B-SSO</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
 </head>
+
 <body class="auth-pending">
   <div class="auth-layout">
     <div class="auth-card auth-card--centered">
 
+      <div class="brand-row brand-row--centered" data-stagger>
+      </div>
+
       <div class="welcome-check" aria-hidden="true" data-stagger></div>
       <h1 class="page-title" data-stagger>Access <em>granted</em></h1>
-
       <div class="session-badge" data-stagger>
         <div class="session-dot" aria-hidden="true"></div>
         <span>Session active</span>
@@ -43,4 +49,5 @@
   <script src="/effects.js"></script>
   <script src="/script.js"></script>
 </body>
+
 </html>

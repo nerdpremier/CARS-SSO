@@ -1,17 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; form-action 'self'; base-uri 'none';">
+    content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; form-action 'self'; base-uri 'none';">
   <title>Create Account — B-SSO</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
 </head>
+
 <body>
   <div class="auth-layout">
     <div class="auth-card">
@@ -23,47 +27,40 @@
 
       <span class="page-icon" aria-hidden="true" data-stagger></span>
       <h1 class="page-title" data-stagger>Start <em>building</em></h1>
-      <p class="page-subtitle" data-stagger>Create your account and join the B-SSO ecosystem</p>
+      <p class="page-subtitle" data-stagger>Create your account and join the B-SSO</p>
 
       <div id="status-box" class="status-box" role="status" aria-live="polite" aria-atomic="true" data-stagger></div>
 
       <form id="register-form" novalidate data-stagger>
         <div class="field">
           <label for="username">Username</label>
-          <input type="text" id="username" name="username"
-            placeholder="Letters and numbers only"
-            autocomplete="username"
-            pattern="[A-Za-z0-9]+" maxlength="32"
-            required aria-required="true">
+          <input type="text" id="username" name="username" placeholder="Letters and numbers only"
+            autocomplete="username" pattern="[A-Za-z0-9]+" maxlength="32" required aria-required="true">
         </div>
 
         <div class="field">
           <label for="email">Email Address</label>
-          <input type="email" id="email" name="email"
-            placeholder="you@example.com"
-            autocomplete="email" maxlength="254"
+          <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" maxlength="254"
             required aria-required="true">
         </div>
 
         <div class="field">
           <label for="password">Password</label>
-          <input type="password" id="password" name="password"
-            placeholder="Create a strong password"
-            autocomplete="new-password" maxlength="128"
-            required aria-required="true" aria-describedby="password-rules">
+          <input type="password" id="password" name="password" placeholder="Create a strong password"
+            autocomplete="new-password" maxlength="128" required aria-required="true" aria-describedby="password-rules">
         </div>
 
         <ul id="password-rules" class="password-rules" aria-label="Password requirements" aria-live="polite">
-          <li class="rule" id="rule-length"  role="listitem" aria-label="Not met: At least 8 characters">
+          <li class="rule" id="rule-length" role="listitem" aria-label="Not met: At least 8 characters">
             <span class="rule-icon" aria-hidden="true"></span> 8+ characters
           </li>
-          <li class="rule" id="rule-upper"   role="listitem" aria-label="Not met: Uppercase letter">
+          <li class="rule" id="rule-upper" role="listitem" aria-label="Not met: Uppercase letter">
             <span class="rule-icon" aria-hidden="true"></span> Uppercase (A–Z)
           </li>
-          <li class="rule" id="rule-lower"   role="listitem" aria-label="Not met: Lowercase letter">
+          <li class="rule" id="rule-lower" role="listitem" aria-label="Not met: Lowercase letter">
             <span class="rule-icon" aria-hidden="true"></span> Lowercase (a–z)
           </li>
-          <li class="rule" id="rule-number"  role="listitem" aria-label="Not met: Number">
+          <li class="rule" id="rule-number" role="listitem" aria-label="Not met: Number">
             <span class="rule-icon" aria-hidden="true"></span> Number (0–9)
           </li>
           <li class="rule" id="rule-special" role="listitem" aria-label="Not met: Symbol">
@@ -82,7 +79,7 @@
   </div>
   <script>
     // เพิ่ม OAuth params ให้ login links
-    (function() {
+    (function () {
       const sp = new URLSearchParams(window.location.search);
       const next = sp.get('next');
       const redirectBack = sp.get('redirect_back');
@@ -91,11 +88,11 @@
         if (next) loginUrl.searchParams.set('next', next);
         if (redirectBack) loginUrl.searchParams.set('redirect_back', redirectBack);
         const newHref = loginUrl.toString();
-        
+
         // Update back link
         const backLink = document.getElementById('back-link');
         if (backLink) backLink.href = newHref;
-        
+
         // Update login link
         const loginLink = document.getElementById('login-link');
         if (loginLink) loginLink.href = newHref;
@@ -105,4 +102,5 @@
   <script src="/effects.js"></script>
   <script src="/script.js"></script>
 </body>
+
 </html>

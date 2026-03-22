@@ -1,72 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <defs>
-    <!-- Primary gradient: cyber blue to deep purple -->
-    <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#3B82F6"/>
-      <stop offset="50%" stop-color="#6366F1"/>
-      <stop offset="100%" stop-color="#7C3AED"/>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366F1" />
+      <stop offset="100%" style="stop-color:#A855F7" />
     </linearGradient>
-    <!-- Secondary gradient for depth -->
-    <linearGradient id="innerGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#60A5FA" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="#A78BFA" stop-opacity="0.6"/>
+    <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#60A5FA" />
+      <stop offset="100%" style="stop-color:#34D399" />
     </linearGradient>
   </defs>
 
-  <!-- Background shield shape -->
-  <path d="M256 32
-           C256 32 80 80 80 200
-           C80 340 256 480 256 480
-           C256 480 432 340 432 200
-           C432 80 256 32 256 32Z"
-        fill="url(#shieldGradient)"/>
+  <rect width="32" height="32" rx="6" fill="#0A0E23"/>
 
-  <!-- Inner shield highlight -->
-  <path d="M256 55
-           C256 55 105 95 105 200
-           C105 320 256 445 256 445
-           C256 445 407 320 407 200
-           C407 95 256 55 256 55Z"
-        fill="none" stroke="url(#innerGradient)" stroke-width="2" opacity="0.5"/>
+  <path d="M16 6 C16 6, 23 8, 24 10 L24 20 C24 26, 16 29, 16 29 C16 29, 8 26, 8 20 L8 10 C9 8, 16 6, 16 6 Z"
+        fill="url(#shieldGrad)"/>
 
-  <!-- The Letter B - modern geometric style -->
-  <g transform="translate(256, 265)" fill="#FFFFFF">
-    <!-- Left vertical bar of B -->
-    <rect x="-65" y="-90" width="20" height="180" rx="4"/>
+  <path d="M12 17 Q13 15, 14 17 T16 17 T18 17 T20 17"
+        fill="none"
+        stroke="url(#waveGrad)"
+        stroke-width="2"
+        stroke-linecap="round"/>
 
-    <!-- Top horizontal curve -->
-    <path d="M-55 -90
-             L-15 -90
-             C35 -90 70 -70 70 -40
-             C70 -10 35 10 -15 10
-             L-45 10"
-          fill="none" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="14" cy="17" r="1" fill="#22D3EE"/>
+  <circle cx="16" cy="17" r="1" fill="#34D399"/>
+  <circle cx="18" cy="17" r="1" fill="#60A5FA"/>
 
-    <!-- Bottom horizontal curve -->
-    <path d="M-45 10
-             L5 10
-             C55 10 90 30 90 65
-             C90 100 55 120 5 120
-             L-55 120"
-          fill="none" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
-
-    <!-- Connection point dot (representing SSO node) -->
-    <circle cx="45" cy="-15" r="12" fill="#FFFFFF"/>
-  </g>
-
-  <!-- Behavioral signal waves (top right) -->
-  <g opacity="0.7">
-    <path d="M340 110 Q360 90 380 110 T420 110" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
-    <path d="M350 130 Q370 110 390 130 T430 130" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
-    <path d="M360 150 Q380 130 400 150 T440 150" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
-  </g>
-
-  <!-- Bottom left signal nodes -->
-  <circle cx="140" cy="360" r="6" fill="#FFFFFF" opacity="0.8"/>
-  <circle cx="170" cy="380" r="4" fill="#FFFFFF" opacity="0.5"/>
-  <circle cx="125" cy="330" r="3" fill="#FFFFFF" opacity="0.4"/>
-
-  <!-- Connection line between nodes -->
-  <line x1="140" y1="360" x2="170" y2="380" stroke="#FFFFFF" stroke-width="1.5" opacity="0.4"/>
-  <line x1="140" y1="360" x2="125" y2="330" stroke="#FFFFFF" stroke-width="1" opacity="0.3"/>
+  <circle cx="16" cy="13" r="1.5" fill="white"/>
 </svg>

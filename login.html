@@ -1,27 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'; form-action 'self'; base-uri 'none';">
+        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'; form-action 'self'; base-uri 'none';">
   <title>Sign In — B-SSO</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
 </head>
-
 <body>
   <div class="auth-layout">
     <div class="auth-card">
 
-      <h1 class="page-title" data-stagger>Wel<em>come</em></h1>
+      <div class="brand-row" data-stagger>
+        <span class="brand-name">B-SSO</span>
+      </div>
+
+      <h1 class="page-title" data-stagger>Welcome <em>back</em></h1>
       <p class="page-subtitle" data-stagger>Sign in to your B-SSO account</p>
 
       <div id="status-box" class="status-box" role="status" aria-live="polite" aria-atomic="true" data-stagger></div>
@@ -29,13 +29,17 @@
       <form id="login-form" novalidate data-stagger>
         <div class="field">
           <label for="username">Username</label>
-          <input type="text" id="username" name="username" placeholder="Enter your username" autocomplete="username"
-            maxlength="32" required aria-required="true" aria-describedby="status-box">
+          <input type="text" id="username" name="username"
+            placeholder="Enter your username"
+            autocomplete="username" maxlength="32"
+            required aria-required="true" aria-describedby="status-box">
         </div>
         <div class="field">
           <label for="password">Password</label>
-          <input type="password" id="password" name="password" placeholder="Enter your password"
-            autocomplete="current-password" maxlength="128" required aria-required="true" aria-describedby="status-box">
+          <input type="password" id="password" name="password"
+            placeholder="Enter your password"
+            autocomplete="current-password" maxlength="128"
+            required aria-required="true" aria-describedby="status-box">
         </div>
         <div class="checkbox-group">
           <input type="checkbox" id="remember-device" name="remember-device">
@@ -55,5 +59,4 @@
   <script src="/effects.js"></script>
   <script src="/script.js"></script>
 </body>
-
 </html>

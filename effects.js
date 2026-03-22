@@ -39,26 +39,26 @@
         this.y = y;
         this.size = Math.random() * 2 + 1.5;
         this.color = colors[Math.floor(Math.random() * colors.length)];
-        
-        // Make movement EXTREMELY slow and gentle
-        this.vx = (dx * 0.01) + (Math.random() - 0.5) * 0.4;
-        this.vy = (dy * 0.01) + (Math.random() - 0.5) * 0.4;
-        
+
+        // Add soft spread/scatter to the initial movement
+        this.vx = (dx * 0.05) + (Math.random() - 0.5) * 1.2;
+        this.vy = (dy * 0.05) + (Math.random() - 0.5) * 1.2;
+
         this.life = 1.0;
-        this.decay = Math.random() * 0.003 + 0.002; // Fade out extremely slowly
+        this.decay = Math.random() * 0.005 + 0.005; // Fade out very softly/slowly
         this.angle = Math.atan2(this.vy, this.vx);
         this.speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
-        this.length = Math.random() * 10 + 6; // dash length slightly shorter for floating dust
+        this.length = Math.random() * 15 + 8; // dash length
       }
 
       update() {
         this.x += this.vx;
         this.y += this.vy;
-        
+
         // Very gentle soft drag so they feel floaty
-        this.vx *= 0.99;
-        this.vy *= 0.99;
-        
+        this.vx *= 0.98;
+        this.vy *= 0.98;
+
         this.life -= this.decay;
         this.angle = Math.atan2(this.vy, this.vx);
       }
@@ -71,10 +71,10 @@
         ctx.lineCap = 'round';
         ctx.lineWidth = this.size;
         ctx.strokeStyle = this.color;
-        
+
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(-this.length * (this.speed * 0.5 + 0.5), 0);
+        ctx.lineTo(-this.length * (this.speed * 0.2 + 0.5), 0);
         ctx.stroke();
         ctx.restore();
       }
@@ -98,26 +98,14 @@
           for (var i = 0; i < steps; i++) {
             var interpX = prevMouse.x + (mouse.x - prevMouse.x) * (i / steps);
             var interpY = prevMouse.y + (mouse.y - prevMouse.y) * (i / steps);
-            
-            // Expand the spawn radius around the trail
-            var angle = Math.random() * Math.PI * 2;
-            var radius = Math.random() * 60; // Wide radius
-            interpX += Math.cos(angle) * radius;
-            interpY += Math.sin(angle) * radius;
-
             if (Math.random() > 0.3) {
               particles.push(new Particle(interpX, interpY, mouse.x - prevMouse.x, mouse.y - prevMouse.y));
             }
           }
         } else {
-          // Spawn constantly in a wide radius when mouse is slow or totally still
-          if (Math.random() > 0.2) {
-             var angle = Math.random() * Math.PI * 2;
-             var radius = Math.random() * 80; // Expand the stationary aura
-             var spx = mouse.x + Math.cos(angle) * radius;
-             var spy = mouse.y + Math.sin(angle) * radius;
-             
-             particles.push(new Particle(spx, spy, (Math.random() - 0.5) * 1, (Math.random() - 0.5) * 1));
+          // Spawn constantly when mouse is slow or entirely still
+          if (Math.random() > 0.3) {
+            particles.push(new Particle(mouse.x, mouse.y, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2));
           }
         }
       }
@@ -138,20 +126,20 @@
 
     /* ── Events ──────────────────────────────────────────── */
     window.addEventListener('resize', resize);
-    document.addEventListener('mousemove', function(e) { 
+    document.addEventListener('mousemove', function (e) {
       if (prevMouse.x === -9999) {
         prevMouse.x = e.clientX;
         prevMouse.y = e.clientY;
       }
-      mouse.x = e.clientX; 
-      mouse.y = e.clientY; 
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
       isMoving = true;
-      
+
       clearTimeout(mouseTimeout);
       mouseTimeout = setTimeout(() => { isMoving = false; }, 50);
     });
-    document.addEventListener('mouseleave', function() { 
-      mouse.x = -9999; mouse.y = -9999; 
+    document.addEventListener('mouseleave', function () {
+      mouse.x = -9999; mouse.y = -9999;
       prevMouse.x = -9999; prevMouse.y = -9999;
       isMoving = false;
     });
@@ -164,19 +152,19 @@
      2.  PAGE TRANSITIONS
      ══════════════════════════════════════════════════════════ */
   window.CarsNav = {
-    go: function(url, replace) {
+    go: function (url, replace) {
       document.body.classList.add('page-exit');
-      setTimeout(function() {
+      setTimeout(function () {
         if (replace) window.location.replace(url);
         else window.location.href = url;
       }, 260);
     }
   };
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', function (e) {
     var a = e.target.closest('a[href]'); if (!a) return;
     var href = a.getAttribute('href');
     if (!href || href.startsWith('#') || href.startsWith('http') ||
-        href.startsWith('mailto:') || href.startsWith('tel:')) return;
+      href.startsWith('mailto:') || href.startsWith('tel:')) return;
     if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
     e.preventDefault(); CarsNav.go(href);
   });
@@ -195,10 +183,10 @@
     return _tc;
   }
   var ICONS = { success: 'fas fa-check', danger: 'fas fa-exclamation-triangle', warning: 'fas fa-bell', info: 'fas fa-info-circle' };
-  window.CarsToast = function(opts) {
+  window.CarsToast = function (opts) {
     var type = opts.type || 'info';
-    var dur  = opts.duration != null ? opts.duration : 4000;
-    var t  = document.createElement('div'); t.className = 'toast toast--' + type; t.setAttribute('role', 'alert');
+    var dur = opts.duration != null ? opts.duration : 4000;
+    var t = document.createElement('div'); t.className = 'toast toast--' + type; t.setAttribute('role', 'alert');
     var ic = document.createElement('i'); ic.className = 'toast-icon ' + (ICONS[type] || 'fas fa-info-circle'); ic.setAttribute('aria-hidden', 'true');
     var bd = document.createElement('div'); bd.className = 'toast-body';
     if (opts.title) {
@@ -213,13 +201,13 @@
     function dismiss() {
       clearTimeout(timer);
       t.classList.add('toast--exit');
-      setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 260);
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 260);
     }
     cl.addEventListener('click', dismiss);
     if (dur > 0) {
       timer = setTimeout(dismiss, dur);
-      t.addEventListener('mouseenter', function() { clearTimeout(timer); });
-      t.addEventListener('mouseleave', function() { timer = setTimeout(dismiss, 1500); });
+      t.addEventListener('mouseenter', function () { clearTimeout(timer); });
+      t.addEventListener('mouseleave', function () { timer = setTimeout(dismiss, 1500); });
     }
     return { dismiss: dismiss };
   };
@@ -230,23 +218,25 @@
   function ripple(btn, e) {
     var rect = btn.getBoundingClientRect();
     var size = Math.max(rect.width, rect.height) * 2.6;
-    var cx   = e && e.clientX != null ? e.clientX - rect.left : rect.width  / 2;
-    var cy   = e && e.clientY != null ? e.clientY - rect.top  : rect.height / 2;
-    var el   = document.createElement('span'); el.setAttribute('aria-hidden', 'true'); btn.appendChild(el);
+    var cx = e && e.clientX != null ? e.clientX - rect.left : rect.width / 2;
+    var cy = e && e.clientY != null ? e.clientY - rect.top : rect.height / 2;
+    var el = document.createElement('span'); el.setAttribute('aria-hidden', 'true'); btn.appendChild(el);
     var anim = el.animate([
-      { position: 'absolute', width: size + 'px', height: size + 'px',
+      {
+        position: 'absolute', width: size + 'px', height: size + 'px',
         left: (cx - size / 2) + 'px', top: (cy - size / 2) + 'px',
         borderRadius: '50%', background: 'rgba(255,255,255,0.25)',
-        transform: 'scale(0)', opacity: '1', pointerEvents: 'none' },
+        transform: 'scale(0)', opacity: '1', pointerEvents: 'none'
+      },
       { transform: 'scale(1)', opacity: '0' }
     ], { duration: 560, easing: 'ease-out', fill: 'forwards' });
-    anim.onfinish = function() { el.remove(); };
+    anim.onfinish = function () { el.remove(); };
   }
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', function (e) {
     var b = e.target.closest('.btn-primary,.btn-portal,.btn-signout,.btn-create');
     if (b) ripple(b, e);
   });
-  document.addEventListener('keydown', function(e) {
+  document.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
       var el = document.activeElement;
       if (el && el.matches('.btn-primary,.btn-portal,.btn-signout,.btn-create')) ripple(el, null);

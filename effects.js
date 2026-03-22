@@ -40,15 +40,15 @@
         this.size = Math.random() * 2 + 1.5;
         this.color = colors[Math.floor(Math.random() * colors.length)];
         
-        // Add soft spread/scatter to the initial movement
-        this.vx = (dx * 0.05) + (Math.random() - 0.5) * 1.2;
-        this.vy = (dy * 0.05) + (Math.random() - 0.5) * 1.2;
+        // Make movement EXTREMELY slow and gentle
+        this.vx = (dx * 0.01) + (Math.random() - 0.5) * 0.4;
+        this.vy = (dy * 0.01) + (Math.random() - 0.5) * 0.4;
         
         this.life = 1.0;
-        this.decay = Math.random() * 0.005 + 0.005; // Fade out very softly/slowly
+        this.decay = Math.random() * 0.003 + 0.002; // Fade out extremely slowly
         this.angle = Math.atan2(this.vy, this.vx);
         this.speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
-        this.length = Math.random() * 15 + 8; // dash length
+        this.length = Math.random() * 10 + 6; // dash length slightly shorter for floating dust
       }
 
       update() {
@@ -56,8 +56,8 @@
         this.y += this.vy;
         
         // Very gentle soft drag so they feel floaty
-        this.vx *= 0.98;
-        this.vy *= 0.98;
+        this.vx *= 0.99;
+        this.vy *= 0.99;
         
         this.life -= this.decay;
         this.angle = Math.atan2(this.vy, this.vx);
@@ -74,7 +74,7 @@
         
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(-this.length * (this.speed * 0.2 + 0.5), 0);
+        ctx.lineTo(-this.length * (this.speed * 0.5 + 0.5), 0);
         ctx.stroke();
         ctx.restore();
       }
@@ -98,14 +98,26 @@
           for (var i = 0; i < steps; i++) {
             var interpX = prevMouse.x + (mouse.x - prevMouse.x) * (i / steps);
             var interpY = prevMouse.y + (mouse.y - prevMouse.y) * (i / steps);
+            
+            // Expand the spawn radius around the trail
+            var angle = Math.random() * Math.PI * 2;
+            var radius = Math.random() * 60; // Wide radius
+            interpX += Math.cos(angle) * radius;
+            interpY += Math.sin(angle) * radius;
+
             if (Math.random() > 0.3) {
               particles.push(new Particle(interpX, interpY, mouse.x - prevMouse.x, mouse.y - prevMouse.y));
             }
           }
         } else {
-          // Spawn constantly when mouse is slow or entirely still
-          if (Math.random() > 0.3) {
-             particles.push(new Particle(mouse.x, mouse.y, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2));
+          // Spawn constantly in a wide radius when mouse is slow or totally still
+          if (Math.random() > 0.2) {
+             var angle = Math.random() * Math.PI * 2;
+             var radius = Math.random() * 80; // Expand the stationary aura
+             var spx = mouse.x + Math.cos(angle) * radius;
+             var spy = mouse.y + Math.sin(angle) * radius;
+             
+             particles.push(new Particle(spx, spy, (Math.random() - 0.5) * 1, (Math.random() - 0.5) * 1));
           }
         }
       }

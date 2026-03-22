@@ -40,12 +40,12 @@
         this.size = Math.random() * 2 + 1.5;
         this.color = colors[Math.floor(Math.random() * colors.length)];
         
-        // Add spread/scatter to the initial movement
-        this.vx = (dx * 0.2) + (Math.random() - 0.5) * 4;
-        this.vy = (dy * 0.2) + (Math.random() - 0.5) * 4;
+        // Add soft spread/scatter to the initial movement
+        this.vx = (dx * 0.05) + (Math.random() - 0.5) * 1.2;
+        this.vy = (dy * 0.05) + (Math.random() - 0.5) * 1.2;
         
         this.life = 1.0;
-        this.decay = Math.random() * 0.02 + 0.015;
+        this.decay = Math.random() * 0.005 + 0.005; // Fade out very softly/slowly
         this.angle = Math.atan2(this.vy, this.vx);
         this.speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
         this.length = Math.random() * 15 + 8; // dash length
@@ -55,9 +55,9 @@
         this.x += this.vx;
         this.y += this.vy;
         
-        // Add a bit of drag
-        this.vx *= 0.95;
-        this.vy *= 0.95;
+        // Very gentle soft drag so they feel floaty
+        this.vx *= 0.98;
+        this.vy *= 0.98;
         
         this.life -= this.decay;
         this.angle = Math.atan2(this.vy, this.vx);

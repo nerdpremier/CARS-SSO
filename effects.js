@@ -6,94 +6,155 @@
   'use strict';
 
   /* ══════════════════════════════════════════════════════════
-     1.  INTERACTIVE CANVAS (Google Antigravity Soft Blurred Aura)
+     1.  INTERACTIVE CANVAS (Exact Antigravity Vector Field)
      ══════════════════════════════════════════════════════════ */
   (function initCanvas() {
     var canvas = document.createElement('canvas');
     canvas.id = 'bg-canvas';
     canvas.setAttribute('aria-hidden', 'true');
-    // Ensure the canvas sits behind everything but doesn't block clicks
-    canvas.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; mix-blend-mode: multiply;';
+    canvas.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;';
     document.body.insertBefore(canvas, document.body.firstChild);
 
     var ctx = canvas.getContext('2d', { alpha: false });
-    var W = 0, H = 0, cx = 0, cy = 0;
+    var W = 0, H = 0;
 
-    /* ── Mouse ────────────────────────── */
-    var mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    var targetMouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    /* ── Interaction ────────────────────────── */
+    var mouse = { x: -1000, y: -1000 };
+    var targetMouse = { x: -1000, y: -1000 };
+    var time = 0;
 
-    /* ── Blobs ────────────────────── */
-    var blobs = [
-      { color: 'rgba(56, 189, 248, 0.4)', size: 600, x: 0, y: 0, vx: 0.5, vy: 0.3, phaseX: 0, phaseY: 0, speed: 0.001, followWeight: 0.05 }, // Aqua/Blue
-      { color: 'rgba(167, 139, 250, 0.4)', size: 500, x: 0, y: 0, vx: -0.4, vy: 0.6, phaseX: 1, phaseY: 2, speed: 0.0015, followWeight: 0.03 }, // Purple
-      { color: 'rgba(244, 114, 182, 0.3)', size: 400, x: 0, y: 0, vx: 0.6, vy: -0.4, phaseX: 2, phaseY: 1, speed: 0.002, followWeight: 0.08 }  // Pink
-    ];
+    /* ── Particles ────────────────────── */
+    var particles = [];
+    var NUM_PARTICLES = 1600; 
 
-    /* ── Init & Resize ───────────────────────────────────── */
+    // Helper to get color based on position (Warm in bottom-left, Blue elsewhere)
+    function getColor(x, y) {
+      // Normalize position
+      var nx = x / W;
+      var ny = y / H;
+      var distToBottomLeft = Math.sqrt(Math.pow(nx - 0.2, 2) + Math.pow(ny - 0.8, 2));
+
+      if (distToBottomLeft < 0.35) {
+        // Warm burst
+        var r = Math.random();
+        if (r < 0.3) return '#E54823'; // Red/Orange
+        if (r < 0.6) return '#F3A926'; // Yellow
+        return '#C52834'; // Dark red
+      }
+      // Default blue tones
+      return Math.random() > 0.5 ? '#2143B8' : '#8B5CF6'; 
+    }
+
+    class Particle {
+      constructor() {
+        this.reset(true);
+      }
+
+      reset(randomizeParams) {
+        this.x = Math.random() * W;
+        this.y = Math.random() * H;
+        
+        // Save initial origin so they drift around a home spot
+        this.ox = this.x;
+        this.oy = this.y;
+
+        this.color = getColor(this.x, this.y);
+        
+        // Random lengths to mimic the screenshot's dots/dashes
+        this.length = Math.random() * 8 + 2; 
+        this.thickness = Math.random() * 1.5 + 1;
+        this.alpha = Math.random() * 0.6 + 0.2;
+        
+        // Natural flow offset
+        this.noiseOffsetX = Math.random() * 1000;
+        this.noiseOffsetY = Math.random() * 1000;
+        
+        this.angle = 0;
+      }
+
+      update() {
+        // Base fluid motion using faux-perlin (sine waves combined)
+        var scale = 0.002;
+        var fluidAngle = Math.sin(this.ox * scale + time) * Math.cos(this.oy * scale - time) * Math.PI;
+        
+        var forceX = Math.cos(fluidAngle);
+        var forceY = Math.sin(fluidAngle);
+
+        // Mouse warping / gravity
+        var dx = mouse.x - this.x;
+        var dy = mouse.y - this.y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        
+        if (dist < 250) {
+          // Repel slightly and swirl
+          var repulsion = (250 - dist) / 250;
+          var angleToMouse = Math.atan2(dy, dx);
+          // Combine pushing away and swirling perpendicular
+          forceX -= Math.cos(angleToMouse) * repulsion * 2;
+          forceY -= Math.sin(angleToMouse) * repulsion * 2;
+          forceX += Math.cos(angleToMouse + Math.PI/2) * repulsion;
+          forceY += Math.sin(angleToMouse + Math.PI/2) * repulsion;
+        }
+
+        // Return to home position gently
+        var homeDx = this.ox - this.x;
+        var homeDy = this.oy - this.y;
+        forceX += homeDx * 0.005;
+        forceY += homeDy * 0.005;
+
+        this.x += forceX;
+        this.y += forceY;
+
+        // Determine drawing angle based on current movement vector
+        this.angle = Math.atan2(forceY, forceX);
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.globalAlpha = this.alpha;
+        ctx.lineCap = 'round';
+        ctx.lineWidth = this.thickness;
+        ctx.strokeStyle = this.color;
+        
+        ctx.beginPath();
+        ctx.moveTo(-this.length / 2, 0);
+        ctx.lineTo(this.length / 2, 0);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
     function resize() {
       W = canvas.width = window.innerWidth;
       H = canvas.height = window.innerHeight;
-      cx = W / 2;
-      cy = H / 2;
       
-      // Initialize blob positions
-      blobs.forEach(blob => {
-        blob.x = cx;
-        blob.y = cy;
-      });
+      var targetParticles = Math.min(2500, Math.floor((W * H) / 900));
+      particles = [];
+      for (var i = 0; i < targetParticles; i++) {
+        particles.push(new Particle());
+      }
     }
 
-    /* ── Main loop ───────────────────────────────────────── */
-    function loop(time) {
-      // 1. Draw solid white background
-      ctx.fillStyle = '#ffffff';
+    function loop() {
+      time += 0.005;
+      
+      // Draw background + soft vignette
+      var grd = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W, H));
+      grd.addColorStop(0, '#ffffff');
+      grd.addColorStop(1, '#e0f2fe'); 
+      ctx.fillStyle = grd;
       ctx.fillRect(0, 0, W, H);
 
-      // Smoothly interpolate mouse position for a "fluid" dragging effect
-      mouse.x += (targetMouse.x - mouse.x) * 0.05;
-      mouse.y += (targetMouse.y - mouse.y) * 0.05;
+      // Smooth mouse interpolation for liquid feel
+      mouse.x += (targetMouse.x - mouse.x) * 0.1;
+      mouse.y += (targetMouse.y - mouse.y) * 0.1;
 
-      // Composite mode for soft color blending
-      ctx.globalCompositeOperation = 'multiply';
-
-      // 2. Draw Blobs
-      blobs.forEach(blob => {
-        // Natural drifting ( Lissajous curve )
-        blob.phaseX += blob.speed;
-        blob.phaseY += blob.speed;
-        
-        var driftX = Math.sin(blob.phaseX) * W * 0.2;
-        var driftY = Math.cos(blob.phaseY) * H * 0.2;
-
-        // Combine base drift with gentle mouse following
-        var targetX = mouse.x + driftX;
-        var targetY = mouse.y + driftY;
-
-        blob.x += (targetX - blob.x) * blob.followWeight;
-        blob.y += (targetY - blob.y) * blob.followWeight;
-
-        // Draw radial gradient (soft blur)
-        var grd = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, blob.size);
-        grd.addColorStop(0, blob.color);
-        
-        // Extract base color, set alpha to 0 for the edge
-        var edgeColor = blob.color.replace(/[\d.]+\)$/g, '0)'); 
-        grd.addColorStop(1, edgeColor);
-
-        ctx.fillStyle = grd;
-        ctx.fillRect(0, 0, W, H);
-      });
-
-      // Restore normal composite operation to draw vignette
-      ctx.globalCompositeOperation = 'source-over';
-
-      // 3. Draw soft noise / texture overlay if desired, or just vignette
-      var vignette = ctx.createRadialGradient(cx, cy, H * 0.3, cx, cy, H * 1.5);
-      vignette.addColorStop(0, 'rgba(240, 249, 255, 0)');
-      vignette.addColorStop(1, 'rgba(224, 242, 254, 0.6)'); // Soft light blue at edges
-      ctx.fillStyle = vignette;
-      ctx.fillRect(0, 0, W, H);
+      for (var i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+      }
 
       requestAnimationFrame(loop);
     }
@@ -104,11 +165,9 @@
       targetMouse.x = e.clientX; 
       targetMouse.y = e.clientY; 
     });
-    
-    // When mouse leaves, return blobs to center slowly
     document.addEventListener('mouseleave', function() { 
-      targetMouse.x = cx;
-      targetMouse.y = cy;
+      targetMouse.x = -1000;
+      targetMouse.y = -1000;
     });
 
     resize();

@@ -4,63 +4,65 @@
  * Fonts: DM Serif Display (headings) + DM Sans (body) + Space Mono (mono)
  */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 /* ═══════════════════════════════════════════════════════════
-   1. TOKENS
+   1. TOKENS (Antigravity Light Theme)
    ═══════════════════════════════════════════════════════════ */
 :root {
-  --navy:        #0C1425;
-  --navy-2:      #1A2744;
-  --navy-3:      #2D3F66;
-  --bg:          #EBF0FA;   /* input / surface bg */
-  --bg-page:     #0A0E23;   /* deep navy grid background */
+  --navy:        #0F172A;
+  --navy-2:      #1E293B;
+  --navy-3:      #334155;
+  --bg:          #F8FAFC;   /* input / surface bg */
+  --bg-page:     #FFFFFF;   /* pristine white background */
   --white:       #FFFFFF;
-  --ink:         #0C1425;
-  --ink-2:       #1E2D4A;
-  --muted:       #5A6A8A;
-  --dim:         #8FA0BF;
-  --placeholder: #A8B8D0;
+  --ink:         #0F172A;
+  --ink-2:       #1E293B;
+  --muted:       #475569;
+  --dim:         #94A3B8;
+  --placeholder: #CBD5E1;
 
-  --accent:      #4F6EF7;
-  --accent-d:    #3A56E0;
-  --accent-l:    #EDF1FF;
+  --accent:      #3B82F6;   /* vibrant google-like blue */
+  --accent-d:    #2563EB;
+  --accent-l:    #EFF6FF;
 
-  --ok:          #0EA472;
-  --ok-bg:       #EAFAF4;
-  --ok-bd:       #A7EDCE;
-  --err:         #E0393E;
-  --err-bg:      #FEF1F1;
-  --err-bd:      #FBBCBD;
-  --warn:        #D97706;
+  --ok:          #10B981;
+  --ok-bg:       #ECFDF5;
+  --ok-bd:       #A7F3D0;
+  --err:         #EF4444;
+  --err-bg:      #FEF2F2;
+  --err-bd:      #FECACA;
+  --warn:        #F59E0B;
   --warn-bg:     #FFFBEB;
   --warn-bd:     #FDE68A;
 
-  --font:        'DM Sans', sans-serif;
-  --font-head:   'DM Serif Display', serif;
+  --font:        'Inter', -apple-system, system-ui, sans-serif;
+  --font-head:   'Inter', -apple-system, system-ui, sans-serif;
   --font-mono:   'Space Mono', monospace;
 
-  --radius:      18px;
-  --radius-sm:   11px;
-  --radius-btn:  11px;
+  --radius:      24px;
+  --radius-sm:   14px;
+  --radius-btn:  14px;
 
-  --shadow-sm:   0 1px 3px rgba(12,20,37,.05), 0 4px 14px rgba(12,20,37,.07);
-  --shadow:      0 2px 6px rgba(12,20,37,.06), 0 16px 48px rgba(12,20,37,.12);
-  --shadow-lg:   0 4px 12px rgba(12,20,37,.06), 0 24px 64px rgba(12,20,37,.14);
-  --focus-ring:  rgba(79,110,247,.22);
+  --shadow-sm:   0 1px 3px rgba(0,0,0,.04), 0 4px 14px rgba(0,0,0,.02);
+  --shadow:      0 8px 30px rgba(0,0,0,.06), 0 24px 64px rgba(0,0,0,.04);
+  --shadow-lg:   0 14px 40px rgba(0,0,0,.08), 0 32px 80px rgba(0,0,0,.05);
+  --focus-ring:  rgba(59,130,246,.25);
 
   /* Bridge aliases */
   --gold:        var(--accent);
   --gold-d:      var(--accent-d);
   --gold-l:      var(--accent-l);
-  --gold-bg:     rgba(79,110,247,0.07);
-  --gold-bd:     rgba(79,110,247,0.22);
+  --gold-bg:     rgba(59,130,246,0.07);
+  --gold-bd:     rgba(59,130,246,0.22);
   --surface:     var(--white);
   --surface-2:   var(--bg);
-  --surface-3:   #D0DCF2;
-  --bg-2:        #D0DCF2;
+  --surface-3:   #E2E8F0;
+  --bg-2:        #E2E8F0;
   --ink-3:       var(--muted);
-  --border:      #DDE3EE;
-  --border-act:  rgba(79,110,247,0.5);
-  --border-h:    #B8C4DA;
+  --border:      #E2E8F0;
+  --border-act:  rgba(59,130,246,0.5);
+  --border-h:    #CBD5E1;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -169,20 +171,27 @@ body.page-exit .portal-wrap { animation: pageOut .28s cubic-bezier(.4,0,1,1) for
   min-height: 100vh; padding: 32px 20px;
 }
 .auth-card {
-  background: rgba(255,255,255,.97);
-  border: 1.5px solid rgba(221,227,238,.9);
+  background: rgba(255,255,255,.98);
+  border: 1px solid rgba(226,232,240,.8);
   border-radius: var(--radius);
-  padding: 36px 32px 32px;
-  width: 100%; max-width: 420px;
-  box-shadow: 0 8px 48px rgba(0,0,30,.32), 0 2px 12px rgba(0,0,20,.18), 0 0 0 1px rgba(255,255,255,.7);
-  backdrop-filter: blur(2px);
+  padding: 40px 36px 36px;
+  width: 100%; max-width: 440px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
   animation: cardIn .5s cubic-bezier(.16,1,.3,1) both;
   position: relative; overflow: hidden;
 }
-/* top-edge glow line */
+/* top-edge glow line (antigravity aesthetic) */
 .auth-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(79,110,247,.45) 40%, rgba(79,110,247,.45) 60%, transparent 100%);
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #A855F7, #3B82F6, #10B981, #F59E0B);
+  background-size: 200% 100%;
+  animation: bg-pan 4s linear infinite;
+}
+@keyframes bg-pan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 .auth-card--centered { text-align: center; }
 .consent-card { max-width: 440px; text-align: center; }
@@ -310,6 +319,7 @@ body.page-exit .portal-wrap { animation: pageOut .28s cubic-bezier(.4,0,1,1) for
   outline: none;
   transition: border-color .2s, box-shadow .2s, background .2s;
   -webkit-appearance: none;
+  appearance: none;
 }
 .field input::placeholder { color: var(--placeholder); }
 .field input:hover  { border-color: var(--border-h); }

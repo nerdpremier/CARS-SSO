@@ -268,18 +268,8 @@ body.page-exit .portal-wrap { animation: pageOut .28s cubic-bezier(.4,0,1,1) for
 
 
 /* ═══════════════════════════════════════════════════════════
-   9. BRAND ROW
+   9. PAGE TITLE
    ═══════════════════════════════════════════════════════════ */
-.brand-row {
-  display: flex; align-items: center; gap: 10px; margin-bottom: 22px;
-}
-.brand-row--centered { justify-content: center; }
-.brand-name {
-  font-family: var(--font-head); font-size: 16px;
-  color: var(--ink); letter-spacing: -.01em;
-}
-
-/* Page title */
 .page-title {
   font-family: var(--font-head); font-size: 24px;
   color: var(--ink); letter-spacing: -.4px;

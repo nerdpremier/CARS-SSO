@@ -6,120 +6,153 @@
   'use strict';
 
   /* ══════════════════════════════════════════════════════════
-     1.  INTERACTIVE CANVAS (Antigravity Colorful Mouse Trail)
+     1.  INTERACTIVE CANVAS (Google Antigravity Swirling Particles)
      ══════════════════════════════════════════════════════════ */
   (function initCanvas() {
     var canvas = document.createElement('canvas');
     canvas.id = 'bg-canvas';
     canvas.setAttribute('aria-hidden', 'true');
+    // Ensure the canvas sits behind everything but doesn't block clicks
+    canvas.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0.85;';
     document.body.insertBefore(canvas, document.body.firstChild);
 
-    var ctx = canvas.getContext('2d');
-    var W = 0, H = 0;
+    var ctx = canvas.getContext('2d', { alpha: false });
+    var W = 0, H = 0, cx = 0, cy = 0;
 
     /* ── Mouse ────────────────────────── */
     var mouse = { x: -9999, y: -9999 };
-    var prevMouse = { x: -9999, y: -9999 };
     var isMoving = false;
     var mouseTimeout;
 
     /* ── Particles ────────────────────── */
     var particles = [];
+    var NUM_PARTICLES = 1200; // Dense particle field
+    
+    // Antigravity Brand Colors
     var colors = [
-      '#3B82F6', /* Blue */
-      '#8B5CF6', /* Purple */
-      '#EC4899', /* Pink */
-      '#F59E0B', /* Orange */
-      '#10B981'  /* Green */
+      '#3B82F6', // Blue
+      '#8B5CF6', // Purple
+      '#EF4444', // Red
+      '#F59E0B', // Orange
+      '#06B6D4'  // Cyan
     ];
 
     class Particle {
-      constructor(x, y, dx, dy) {
-        this.x = x;
-        this.y = y;
-        this.size = Math.random() * 2 + 1.5;
+      constructor() {
+        this.reset(true);
+      }
+
+      reset(randomizeRadius) {
+        // Distribute particles in a swirling orbit around center
+        var angle = Math.random() * Math.PI * 2;
+        var radius = randomizeRadius ? Math.random() * (Math.max(W, H) * 0.8) : Math.max(W, H) * 0.8 + Math.random() * 100;
+        
+        this.x = cx + Math.cos(angle) * radius;
+        this.y = cy + Math.sin(angle) * radius;
+        
+        // Base orbit speed
+        this.orbitSpeed = (Math.random() * 0.001) + 0.0005;
+        this.angle = angle;
+        this.radius = radius;
+        
+        // Radial inward drift
+        this.drift = (Math.random() * 0.5) + 0.1;
+        
+        this.size = Math.random() * 1.5 + 0.5;
+        this.length = Math.random() * 20 + 10;
         this.color = colors[Math.floor(Math.random() * colors.length)];
-        
-        // Add spread/scatter to the initial movement
-        this.vx = (dx * 0.2) + (Math.random() - 0.5) * 4;
-        this.vy = (dy * 0.2) + (Math.random() - 0.5) * 4;
-        
-        this.life = 1.0;
-        this.decay = Math.random() * 0.02 + 0.015;
-        this.angle = Math.atan2(this.vy, this.vx);
-        this.speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
-        this.length = Math.random() * 15 + 8; // dash length
+        this.alpha = Math.random() * 0.5 + 0.1;
       }
 
       update() {
-        this.x += this.vx;
-        this.y += this.vy;
+        // Orbit math
+        this.angle += this.orbitSpeed;
+        this.radius -= this.drift;
         
-        // Add a bit of drag
-        this.vx *= 0.95;
-        this.vy *= 0.95;
+        // Mouse interaction (repel)
+        var dx = this.x - mouse.x;
+        var dy = this.y - mouse.y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
         
-        this.life -= this.decay;
-        this.angle = Math.atan2(this.vy, this.vx);
+        var targetX = cx + Math.cos(this.angle) * this.radius;
+        var targetY = cy + Math.sin(this.angle) * this.radius;
+
+        if (dist < 150 && isMoving) {
+          var force = (150 - dist) / 150;
+          targetX += (dx / dist) * force * 100;
+          targetY += (dy / dist) * force * 100;
+        }
+
+        // Smoothly move to target
+        this.x += (targetX - this.x) * 0.1;
+        this.y += (targetY - this.y) * 0.1;
+
+        // Reset if inhaled into center
+        if (this.radius < 20) {
+          this.reset(false);
+          this.radius = Math.max(W, H) * 0.8; 
+          this.alpha = 0; // fade in
+        } else if (this.alpha < 0.6) {
+          this.alpha += 0.01;
+        }
       }
 
       draw() {
+        // Calculate tangent vector for the dash direction (perpendicular to radius)
+        var dashAngle = this.angle + Math.PI / 2;
+        if (this.radius < 100) {
+            // swirl intensely inward
+            dashAngle += Math.PI / 4;
+        }
+
         ctx.save();
         ctx.translate(this.x, this.y);
-        ctx.rotate(this.angle);
-        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.rotate(dashAngle);
+        ctx.globalAlpha = this.alpha;
         ctx.lineCap = 'round';
         ctx.lineWidth = this.size;
         ctx.strokeStyle = this.color;
         
         ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(-this.length * (this.speed * 0.2 + 0.5), 0);
+        ctx.moveTo(-this.length / 2, 0);
+        ctx.lineTo(this.length / 2, 0);
         ctx.stroke();
         ctx.restore();
       }
     }
 
-    /* ── Resize ──────────────────────────────────────────── */
+    /* ── Init & Resize ───────────────────────────────────── */
     function resize() {
       W = canvas.width = window.innerWidth;
       H = canvas.height = window.innerHeight;
+      cx = W / 2;
+      cy = H / 2;
+      
+      // Adjust particle count based on screen size
+      var targetParticles = Math.min(2000, Math.floor((W * H) / 1000));
+      if (particles.length === 0) {
+         for (var i = 0; i < targetParticles; i++) particles.push(new Particle());
+      }
     }
 
     /* ── Main loop ───────────────────────────────────────── */
     function loop() {
-      // Clear canvas (we use a solid white background in style.css or let the canvas be transparent)
-      ctx.clearRect(0, 0, W, H);
+      // Draw pristine white/blue background directly on canvas to prevent stacking lag
+      var grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H));
+      grd.addColorStop(0, '#ffffff');
+      grd.addColorStop(1, '#e0f2fe'); // Soft blue vignette
+      
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, W, H);
 
-      // Interpolate particles if mouse moved fast
-      if (isMoving && prevMouse.x !== -9999) {
-        var dist = Math.hypot(mouse.x - prevMouse.x, mouse.y - prevMouse.y);
-        if (dist > 5) {
-          var steps = Math.min(Math.floor(dist / 5), 10);
-          for (var i = 0; i < steps; i++) {
-            var interpX = prevMouse.x + (mouse.x - prevMouse.x) * (i / steps);
-            var interpY = prevMouse.y + (mouse.y - prevMouse.y) * (i / steps);
-            if (Math.random() > 0.3) {
-              particles.push(new Particle(interpX, interpY, mouse.x - prevMouse.x, mouse.y - prevMouse.y));
-            }
-          }
-        } else {
-          if (Math.random() > 0.5) {
-             particles.push(new Particle(mouse.x, mouse.y, mouse.x - prevMouse.x, mouse.y - prevMouse.y));
-          }
-        }
-      }
+      // Composite operation for vivid colors
+      ctx.globalCompositeOperation = 'source-over';
 
-      for (var i = particles.length - 1; i >= 0; i--) {
+      for (var i = 0; i < particles.length; i++) {
         particles[i].update();
         particles[i].draw();
-        if (particles[i].life <= 0) {
-          particles.splice(i, 1);
-        }
       }
-
-      prevMouse.x = mouse.x;
-      prevMouse.y = mouse.y;
 
       requestAnimationFrame(loop);
     }
@@ -127,21 +160,12 @@
     /* ── Events ──────────────────────────────────────────── */
     window.addEventListener('resize', resize);
     document.addEventListener('mousemove', function(e) { 
-      if (prevMouse.x === -9999) {
-        prevMouse.x = e.clientX;
-        prevMouse.y = e.clientY;
-      }
       mouse.x = e.clientX; 
       mouse.y = e.clientY; 
       isMoving = true;
       
       clearTimeout(mouseTimeout);
-      mouseTimeout = setTimeout(() => { isMoving = false; }, 50);
-    });
-    document.addEventListener('mouseleave', function() { 
-      mouse.x = -9999; mouse.y = -9999; 
-      prevMouse.x = -9999; prevMouse.y = -9999;
-      isMoving = false;
+      mouseTimeout = setTimeout(() => { isMoving = false; }, 200);
     });
 
     resize();

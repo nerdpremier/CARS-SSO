@@ -1,97 +1,66 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
   <defs>
-    <!-- Gradient for shield -->
+    <!-- Cyber Security Gradients -->
     <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#6366F1;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#8B5CF6;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#A855F7;stop-opacity:1" />
+      <stop offset="0%" stop-color="#312E81" /> <!-- Deep Security Purple -->
+      <stop offset="45%" stop-color="#4F46E5" /> <!-- Vibrant Indigo -->
+      <stop offset="100%" stop-color="#0284C7" /> <!-- Cyber Blue -->
     </linearGradient>
-
-    <!-- Gradient for behavioral wave -->
-    <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#60A5FA;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#22D3EE;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#34D399;stop-opacity:1" />
+    <linearGradient id="waveGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#A78BFA" />
     </linearGradient>
-
-    <!-- Glow effect -->
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="2" result="blur"/>
+    <!-- Inner Glow for Shield Edge -->
+    <linearGradient id="shieldEdge" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0" />
+    </linearGradient>
+    <!-- Node Glow Filter -->
+    <filter id="nodeGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
       <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
       </feMerge>
-    </filter>
-
-    <!-- Drop shadow -->
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.3"/>
     </filter>
   </defs>
 
-  <!-- Background circle -->
-  <circle cx="50" cy="50" r="46" fill="#0A0E23"/>
-  <circle cx="50" cy="50" r="44" fill="none" stroke="#1E293B" stroke-width="1"/>
+  <!-- Modern Shield Base -->
+  <path d="M128 16 C184 16 226 36 226 36 L226 104 C226 186 142 236 128 244 C114 236 30 186 30 104 L30 36 C30 36 72 16 128 16 Z" fill="url(#shieldGrad)"/>
+  <path d="M128 16 C184 16 226 36 226 36 L226 104 C226 186 142 236 128 244 C114 236 30 186 30 104 L30 36 C30 36 72 16 128 16 Z" fill="none" stroke="url(#shieldEdge)" stroke-width="2"/>
+  
+  <!-- Subtle Internal Grid/Circuit representing Cyber Infrastructure -->
+  <g stroke="#FFFFFF" stroke-opacity="0.05" stroke-width="2">
+    <path d="M128 36 L128 220" />
+    <path d="M50 104 L206 104" />
+    <path d="M70 60 L186 160" />
+    <path d="M70 160 L186 60" />
+  </g>
 
-  <!-- Shield shape -->
-  <path d="M50 18
-           C50 18, 68 22, 72 26
-           L72 52
-           C72 68, 50 78, 50 78
-           C50 78, 28 68, 28 52
-           L28 26
-           C32 22, 50 18, 50 18 Z"
-        fill="url(#shieldGrad)"
-        filter="url(#shadow)"
-        opacity="0.95"/>
+  <!-- The "B" Core Element: Digital lines + Node Connections -->
+  <g transform="translate(4, -4)">
+    <!-- Vertical Signal Line (Stem of the B) -->
+    <line x1="96" y1="74" x2="96" y2="182" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round"/>
+    
+    <!-- Top Loop (Auth/Access) -->
+    <path d="M96 74 L138 74 C164 74 180 86 180 108 C180 130 164 142 138 142 L96 142" fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Bottom Loop (AI/Intelligence) -->
+    <path d="M96 134 L146 134 C176 134 192 148 192 174 C192 200 176 214 146 214 L96 214" fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Emitting Nodes with Glow -->
+    <g filter="url(#nodeGlow)">
+      <!-- Start/End Nodes on the stem -->
+      <circle cx="96" cy="74" r="9" fill="#38BDF8"/>
+      <circle cx="96" cy="214" r="9" fill="#38BDF8"/>
+      
+      <!-- Checkpoint Nodes on the loops -->
+      <circle cx="180" cy="108" r="7" fill="#A78BFA"/>
+      <circle cx="192" cy="174" r="7" fill="#A78BFA"/>
+      <circle cx="138" cy="142" r="5" fill="#FFFFFF"/>
+    </g>
 
-  <!-- Shield border highlight -->
-  <path d="M50 20
-           C50 20, 66 23.5, 70 27
-           L70 52
-           C70 66, 50 75, 50 75
-           C50 75, 30 66, 30 52
-           L30 27
-           C34 23.5, 50 20, 50 20 Z"
-        fill="none"
-        stroke="rgba(255,255,255,0.2)"
-        stroke-width="1"/>
-
-  <!-- Behavioral/AI wave pattern inside shield -->
-  <path d="M35 50
-           Q38 45, 41 50
-           T47 50
-           T53 50
-           T59 50
-           T65 50"
-        fill="none"
-        stroke="url(#waveGrad)"
-        stroke-width="3"
-        stroke-linecap="round"
-        filter="url(#glow)"/>
-
-  <!-- Neural connection dots -->
-  <circle cx="41" cy="50" r="2.5" fill="#22D3EE" filter="url(#glow)"/>
-  <circle cx="47" cy="50" r="2.5" fill="#34D399" filter="url(#glow)"/>
-  <circle cx="53" cy="50" r="2.5" fill="#60A5FA" filter="url(#glow)"/>
-  <circle cx="59" cy="50" r="2.5" fill="#8B5CF6" filter="url(#glow)"/>
-
-  <!-- SSO connection lines (bottom of shield) -->
-  <path d="M42 62 L45 65 L48 62"
-        fill="none"
-        stroke="rgba(255,255,255,0.6)"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"/>
-  <path d="M52 62 L55 65 L58 62"
-        fill="none"
-        stroke="rgba(255,255,255,0.6)"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"/>
-
-  <!-- Center lock/keyhole element (subtle) -->
-  <circle cx="50" cy="38" r="4" fill="rgba(255,255,255,0.9)"/>
-  <path d="M48 41 L48 44 L52 44 L52 41"
-        fill="rgba(255,255,255,0.9)"/>
+    <!-- Behavioral Intelligence Wave (Intersecting the B) -->
+    <path d="M60 142 Q110 80 140 142 T220 120" fill="none" stroke="url(#waveGrad)" stroke-width="4" stroke-linecap="round" stroke-dasharray="10 8"/>
+  </g>
 </svg>

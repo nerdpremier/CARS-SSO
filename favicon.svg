@@ -1,29 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
     <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#6366F1" />
-      <stop offset="100%" style="stop-color:#A855F7" />
-    </linearGradient>
-    <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#60A5FA" />
-      <stop offset="100%" style="stop-color:#34D399" />
+      <stop offset="0%" stop-color="#312E81" />
+      <stop offset="45%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#0284C7" />
     </linearGradient>
   </defs>
 
-  <rect width="32" height="32" rx="6" fill="#0A0E23"/>
-
-  <path d="M16 6 C16 6, 23 8, 24 10 L24 20 C24 26, 16 29, 16 29 C16 29, 8 26, 8 20 L8 10 C9 8, 16 6, 16 6 Z"
-        fill="url(#shieldGrad)"/>
-
-  <path d="M12 17 Q13 15, 14 17 T16 17 T18 17 T20 17"
-        fill="none"
-        stroke="url(#waveGrad)"
-        stroke-width="2"
-        stroke-linecap="round"/>
-
-  <circle cx="14" cy="17" r="1" fill="#22D3EE"/>
-  <circle cx="16" cy="17" r="1" fill="#34D399"/>
-  <circle cx="18" cy="17" r="1" fill="#60A5FA"/>
-
-  <circle cx="16" cy="13" r="1.5" fill="white"/>
+  <!-- Shield Base -->
+  <path d="M32 4 C46 4 56 9 56 9 L56 26 C56 46 35 59 32 61 C29 59 8 46 8 26 L8 9 C8 9 18 4 32 4 Z" fill="url(#shieldGrad)"/>
+  
+  <!-- Stylized B -->
+  <path d="M24 18 L34 18 C40 18 44 21 44 26 C44 31 40 34 34 34 L24 34 M24 31 L36 31 C43 31 47 34 47 40 C47 46 43 49 36 49 L24 49" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="24" y1="18" x2="24" y2="49" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Node touches -->
+  <circle cx="24" cy="18" r="2.5" fill="#38BDF8"/>
+  <circle cx="24" cy="49" r="2.5" fill="#38BDF8"/>
+  <circle cx="47" cy="40" r="2.5" fill="#A78BFA"/>
 </svg>

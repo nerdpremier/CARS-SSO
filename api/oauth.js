@@ -17,7 +17,7 @@
 // Features:
 //   PKCE (RFC 7636)  — code_challenge_method=S256 สำหรับ public clients (SPA/mobile)
 //   Scope            — 'profile' | 'email' | 'openid' (per-client + per-request)
-//   Refresh Token    — 30-day TTL, single-use rotation
+//   Refresh Token    — 7-day TTL, single-use rotation
 //   SSO Exchange     — one-time token สำหรับ redirect-back flow
 //   Client Rotate    — PATCH /api/oauth/clients (rotate client_secret)
 // ============================================================
@@ -36,7 +36,7 @@ const USER_REGEX               = /^[a-zA-Z0-9]+$/;
 const MAX_CLIENTS_PER_USER     = 10;
 const CODE_TTL_MINUTES         = 10;
 const ACCESS_TOKEN_TTL_SECONDS = 3600;          // 1 ชั่วโมง
-const REFRESH_TOKEN_TTL_DAYS   = 30;            // 30 วัน
+const REFRESH_TOKEN_TTL_DAYS   = 7;             // 7 วัน
 
 // Scopes ที่ระบบรองรับ — ต้องตรงกับ schema.sql comment
 const VALID_SCOPES = new Set(['profile', 'email', 'openid']);

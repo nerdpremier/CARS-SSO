@@ -70,6 +70,7 @@ CREATE INDEX IF NOT EXISTS idx_login_risks_username_time
 
 -- ============================================================
 -- 4) USER DEVICES (remember device)
+-- อายุการใช้งาน: 7 วัน (cleanup โดย lib/cleanup.js)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS user_devices (
     id          BIGSERIAL   PRIMARY KEY,

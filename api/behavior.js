@@ -119,6 +119,7 @@ export default async function handler(req, res) {
     let username = null;
     let sessionJti = null;
     let authType = null; // 'session_cookie' | 'oauth_bearer'
+    let tokenPreLoginLogId = null; // pre_login_log_id จาก oauth_tokens (server-side, ไม่ต้องพึ่ง cookie)
 
     // ── Auth path A: same-origin SSO session cookie (legacy) ──
     if (sessionCookieToken) {
@@ -147,7 +148,7 @@ export default async function handler(req, res) {
 
         try {
             const result = await pool.query(
-                `SELECT ot.id, ot.username, ot.expires_at, ot.revoked_at
+                `SELECT ot.id, ot.username, ot.expires_at, ot.revoked_at, ot.pre_login_log_id
                  FROM oauth_tokens ot
                  WHERE ot.token_hash = $1 AND ot.token_type = 'access'`,
                 [hashToken(token)]
@@ -172,6 +173,8 @@ export default async function handler(req, res) {
             username = row.username;
             sessionJti = `oauth:${row.id}`;
             authType = 'oauth_bearer';
+            tokenPreLoginLogId = row.pre_login_log_id || null;
+            auditLog('BEHAVIOR_OAUTH_TOKEN_LOADED', { oauthTokenId: row.id, username, tokenPreLoginLogId });
         } catch (dbErr) {
             console.error('[ERROR] behavior.js oauth token lookup failed:', dbErr.message);
             return res.status(500).json({ error: 'Internal server error' });
@@ -308,17 +311,17 @@ export default async function handler(req, res) {
         let combinedScore = null;
         let combinedAction = 'low';
 
-        const preLoginLogId = req.body?.pre_login_log_id;
+        const preLoginLogId = tokenPreLoginLogId || req.body?.pre_login_log_id;
 
         // พยายามดึง pre-login score ถ้ามี
         let loginRiskId = null;
-        console.info(`[TRACE] behavior.js: Starting correlation for user="${username}", sessionJti="${sessionJti}", pre_login_log_id=${preLoginLogId}`);
+        auditLog('TRACE_CORRELATION_START', { username, sessionJti, preLoginLogId });
         
         try {
             // (1B) ถ้ามี pre_login_log_id จากเว็บลูกค้า → ใช้อันนี้ก่อน
             if (preLoginLogId) {
                 const parsed = Number(preLoginLogId);
-                console.info(`[TRACE] behavior.js: Checking (1B) by ID=${parsed}`);
+                auditLog('TRACE_CORRELATION_STEP', { step: '1B_ID', parsedId: parsed });
                 if (Number.isInteger(parsed) && parsed > 0) {
                     const byId = await pool.query(
                         `SELECT id, pre_login_score, is_success
@@ -330,18 +333,18 @@ export default async function handler(req, res) {
                     if (byId.rows[0]) {
                         loginRiskId = byId.rows[0].id;
                         preLoginScore = Number(byId.rows[0].pre_login_score || 0);
-                        console.info(`[TRACE] behavior.js: (1B) Match found! id=${loginRiskId}, preScore=${preLoginScore}, is_success=${byId.rows[0].is_success}`);
+                        auditLog('TRACE_CORRELATION_MATCH', { step: '1B_ID', id: loginRiskId, preScore: preLoginScore, is_success: byId.rows[0].is_success });
                     } else {
-                        console.info(`[TRACE] behavior.js: (1B) No match for id=${parsed} and user="${username}"`);
+                        auditLog('TRACE_CORRELATION_MISS', { step: '1B_ID', parsedId: parsed, username });
                     }
                 } else {
-                    console.info(`[TRACE] behavior.js: (1B) Invalid ID format: ${preLoginLogId}`);
+                    auditLog('TRACE_CORRELATION_ERROR', { step: '1B_ID', message: 'Invalid ID format', value: preLoginLogId });
                 }
             }
             
             // (2) ถ้าไม่เจอจาก ID ให้ลองหาด้วย session_jti
             if (!loginRiskId && sessionJti) {
-                console.info(`[TRACE] behavior.js: Checking (2) by sessionJti="${sessionJti}"`);
+                auditLog('TRACE_CORRELATION_STEP', { step: '2_JTI', sessionJti });
                 const preRes = await pool.query(
                     `SELECT id, pre_login_score, is_success
                      FROM login_risks
@@ -353,15 +356,15 @@ export default async function handler(req, res) {
                 if (preRes.rows[0]) {
                     loginRiskId = preRes.rows[0].id;
                     preLoginScore = Number(preRes.rows[0].pre_login_score || 0);
-                    console.info(`[TRACE] behavior.js: (2) Match found! id=${loginRiskId}, preScore=${preLoginScore}, is_success=${preRes.rows[0].is_success}`);
+                    auditLog('TRACE_CORRELATION_MATCH', { step: '2_JTI', id: loginRiskId, preScore: preLoginScore, is_success: preRes.rows[0].is_success });
                 } else {
-                    console.info(`[TRACE] behavior.js: (2) No match for sessionJti="${sessionJti}"`);
+                    auditLog('TRACE_CORRELATION_MISS', { step: '2_JTI', sessionJti });
                 }
             }
             
             // (3) FINAL FALLBACK: หา pre-login score ล่าสุดของ username ที่ success
             if (!loginRiskId) {
-                console.info(`[TRACE] behavior.js: Checking (3) Fallback for user="${username}"`);
+                auditLog('TRACE_CORRELATION_STEP', { step: '3_FALLBACK', username });
                 const fallbackRes = await pool.query(
                     `SELECT id, pre_login_score
                      FROM login_risks
@@ -373,16 +376,16 @@ export default async function handler(req, res) {
                 if (fallbackRes.rows[0]) {
                     loginRiskId = fallbackRes.rows[0].id;
                     preLoginScore = Number(fallbackRes.rows[0].pre_login_score || 0);
-                    console.info(`[TRACE] behavior.js: (3) Match found via Fallback! id=${loginRiskId}, preScore=${preLoginScore}`);
+                    auditLog('TRACE_CORRELATION_MATCH', { step: '3_FALLBACK', id: loginRiskId, preScore: preLoginScore });
                 } else {
-                    console.info(`[TRACE] behavior.js: (3) No success record found for user="${username}"`);
+                    auditLog('TRACE_CORRELATION_MISS', { step: '3_FALLBACK', username });
                 }
             }
         } catch (preErr) {
-            console.error('[ERROR] behavior.js correlation failed:', preErr.message);
+            auditLog('TRACE_CORRELATION_ERROR', { message: preErr.message });
         }
 
-        console.info(`[TRACE] behavior.js: Correlation result: loginRiskId=${loginRiskId}, behaviorScore=${behaviorScore}`);
+        auditLog('TRACE_CORRELATION_END', { loginRiskId, behaviorScore });
 
         // รวมคะแนนได้ก็ต่อเมื่อมี behaviorScore (จาก engine /score) และมี pre-login score
         if (behaviorScore != null && loginRiskId != null) {

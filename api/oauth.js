@@ -522,13 +522,14 @@ async function handleAuthorize(req, res, ip) {
             await pool.query(
                 `INSERT INTO oauth_codes
                  (code_hash, client_id, username, redirect_uri, scope,
-                  code_challenge, code_challenge_method, expires_at)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                  code_challenge, code_challenge_method, expires_at, pre_login_log_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
                 [codeHash, client_id, decoded.username, redirect_uri,
                  effectiveScope,
                  code_challenge || null,
                  code_challenge ? 'S256' : null,
-                 expiresAt]
+                 expiresAt,
+                 pre_login_log_id || null]
             );
 
             // ── Link session_jti to pre-login record for OAuth flow ─────────────
@@ -638,7 +639,7 @@ async function handleToken(req, res, ip) {
             const codeHash   = hashToken(code);
             const codeResult = await tokenClient.query(
                 `SELECT id, username, redirect_uri, scope, expires_at, used,
-                        code_challenge, code_challenge_method
+                        code_challenge, code_challenge_method, pre_login_log_id
                  FROM oauth_codes WHERE code_hash = $1 AND client_id = $2 FOR UPDATE`,
                 [codeHash, client_id]
             );
@@ -697,25 +698,17 @@ async function handleToken(req, res, ip) {
             const accessHash  = hashToken(accessToken);
             const accessExp   = new Date(Date.now() + ACCESS_TOKEN_TTL_SECONDS * 1000);
 
+            // ── ดึง pre_login_log_id จาก oauth_codes (เก็บไว้ตอนออก auth code) ──
+            const codePreLoginLogId = codeRow.pre_login_log_id || null;
+
             const accessResult = await tokenClient.query(
-                `INSERT INTO oauth_tokens (token_hash, token_type, client_id, username, scope, expires_at)
-                 VALUES ($1, 'access', $2, $3, $4, $5)
+                `INSERT INTO oauth_tokens (token_hash, token_type, client_id, username, scope, expires_at, pre_login_log_id)
+                 VALUES ($1, 'access', $2, $3, $4, $5, $6)
                  RETURNING id`,
-                [accessHash, client_id, codeRow.username, scope, accessExp]
+                [accessHash, client_id, codeRow.username, scope, accessExp, codePreLoginLogId]
             );
             const accessTokenId = accessResult.rows[0].id;
-
-            // ── Extract pre-login record ID for OAuth token session (if passed) ─────
-            let preLoginLogId = null;
-            if (pre_login_log_id) {
-                const parsedId = Number(pre_login_log_id);
-                if (Number.isInteger(parsedId) && parsedId > 0) {
-                    preLoginLogId = parsedId;
-                    // No need to insert a duplicate login_risks row for OAuth anymore.
-                    // The frontend behavior collector will use this preLoginLogId to link post-login data 
-                    // directly back to the original SSO web session's login_risks row.
-                }
-            }
+            auditLog('OAUTH_TOKEN_PRE_LOGIN_LINKED', { accessTokenId, preLoginLogId: codePreLoginLogId });
 
             // ── Refresh Token ──────────────────────────────────
             const refreshToken = crypto.randomBytes(32).toString('hex');

@@ -50,6 +50,9 @@ function hashToken(token) {
  */
 function hashStepupCode(stepupId, code) {
     const pepper = process.env.MFA_PEPPER;
+    if (!pepper) {
+        throw new Error('MFA_PEPPER environment variable not set');
+    }
     return crypto
         .createHmac('sha256', pepper)
         .update(`${stepupId}:${code}`)
@@ -207,6 +210,7 @@ export default async function handler(req, res) {
                 const row = rowRes.rows[0];
                 if (!row) {
                     await client.query('ROLLBACK');
+                    auditLog('STEPUP_INVALID_CHALLENGE', { username, ip, stepupId: id });
                     return res.status(400).json({ error: 'Invalid challenge' });
                 }
                 if (row.verified_at) {
@@ -215,11 +219,15 @@ export default async function handler(req, res) {
                 }
                 if (new Date() > new Date(row.expires_at)) {
                     await client.query('ROLLBACK');
+                    auditLog('STEPUP_EXPIRED', { username, ip, stepupId: id });
                     return res.status(400).json({ error: 'Code expired' });
                 }
                 const attempts = Number(row.attempts || 0);
                 if (attempts >= STEPUP_MAX_ATTEMPTS) {
                     await client.query('ROLLBACK');
+                    auditLog('STEPUP_MAX_ATTEMPTS_EXCEEDED', {
+                        username, ip, stepupId: id, attempts: newAttempts
+                    });
                     return res.status(429).json({ error: 'Too many attempts' });
                 }
 

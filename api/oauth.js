@@ -740,6 +740,17 @@ async function handleToken(req, res, ip) {
         // GRANT: refresh_token (single-use rotation)
         // ══════════════════════════════════════════════════════
         if (grant_type === 'refresh_token') {
+            // SECURITY FIX: Rate limiting for refresh token attempts
+            try {
+                if (await checkRateLimit(`ip:${ip}:oauth-refresh`, 10, 60_000)) {
+                    await tokenClient.query('ROLLBACK');
+                    auditLog('OAUTH_REFRESH_RATE_LIMIT', { clientId: client_id, ip });
+                    return res.status(429).json({ error: 'too_many_requests' });
+                }
+            } catch (rlErr) {
+                console.error('[WARN] rate-limit error (oauth-refresh), failing open:', rlErr.message);
+            }
+
             if (!refresh_token || typeof refresh_token !== 'string' || refresh_token.length > 128) {
                 await tokenClient.query('ROLLBACK');
                 return res.status(400).json({ error: 'invalid_request: refresh_token is required' });
@@ -777,18 +788,14 @@ async function handleToken(req, res, ip) {
             }
             if (new Date() > new Date(rt.expires_at)) {
                 await tokenClient.query('ROLLBACK');
+                auditLog('OAUTH_REFRESH_EXPIRED', { clientId: client_id, username: rt.username, ip });
                 return res.status(400).json({ error: 'invalid_grant: refresh_token has expired' });
             }
 
-            // Revoke refresh token เก่า (rotation)
-            await tokenClient.query(
-                'UPDATE oauth_tokens SET revoked_at = NOW() WHERE id = $1',
-                [rt.id]
-            );
-
             // SECURITY FIX: OAuth refresh token risk re-assessment
+            // MUST check risk BEFORE revoking old token to prevent token loss on block
             // Re-calculate risk based on current device/IP context before issuing new tokens
-            const refreshFingerprint = `oauth_refresh:${client_id}:${ip}`;
+            const refreshFingerprint = `oauth_refresh:${client_id}:${ip}:${hashToken(req.headers['user-agent'] || 'unknown').slice(0, 16)}`;
             const deviceRes = await tokenClient.query(
                 'SELECT id FROM user_devices WHERE username = $1 AND fingerprint = $2',
                 [rt.username, refreshFingerprint]
@@ -827,7 +834,7 @@ async function handleToken(req, res, ip) {
                 stepUpRequired
             });
 
-            // SECURITY FIX: Block HIGH risk refresh attempts
+            // SECURITY FIX: Check risk BEFORE revoking old token
             if (currentRiskLevel === 'HIGH') {
                 await tokenClient.query('ROLLBACK');
                 auditLog('OAUTH_REFRESH_HIGH_RISK_BLOCKED', {
@@ -836,12 +843,19 @@ async function handleToken(req, res, ip) {
                     ip,
                     riskScore: currentRiskScore
                 });
+                // SECURITY: Generic error to avoid information leakage
                 return res.status(403).json({
                     error: 'access_denied',
-                    error_description: 'High risk detected. Please re-authenticate.',
+                    error_description: 'Authentication failed. Please re-authenticate.',
                     step_up_required: true
                 });
             }
+
+            // Only revoke old token AFTER risk check passes
+            await tokenClient.query(
+                'UPDATE oauth_tokens SET revoked_at = NOW() WHERE id = $1',
+                [rt.id]
+            );
 
             const scope       = rt.scope || DEFAULT_SCOPE;
             const accessToken = crypto.randomBytes(32).toString('hex');

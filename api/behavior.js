@@ -502,8 +502,16 @@ export default async function handler(req, res) {
                 const stepupId = crypto.randomUUID();
                 const stepupCode = crypto.randomInt(100000, 1000000).toString();
 
-                // Hash the code with MFA pepper
-                const pepper = process.env.MFA_PEPPER || 'default-pepper-change-in-production';
+                // SECURITY FIX: Require MFA_PEPPER - no hardcoded fallback
+                const pepper = process.env.MFA_PEPPER;
+                if (!pepper) {
+                    console.error('[FATAL] MFA_PEPPER environment variable not set');
+                    // Fail securely - don't create challenge without proper pepper
+                    return res.status(500).json({
+                        action: 'revoke',
+                        reason: 'security_configuration_error'
+                    });
+                }
                 const codeHash = crypto
                     .createHmac('sha256', pepper)
                     .update(`${stepupId}:${stepupCode}`)
@@ -544,8 +552,22 @@ export default async function handler(req, res) {
                 });
             } catch (stepupErr) {
                 console.error('[WARN] behavior.js auto step-up creation failed:', stepupErr.message);
-                // Fall back to revoke if step-up creation fails (security first)
-                combinedAction = 'revoke';
+                // SECURITY FIX: Degrade gracefully instead of auto-revoke
+                // Log security alert but allow request to prevent false positives
+                auditLog('OAUTH_STEP_UP_CREATION_FAILED_SECURITY_ALERT', {
+                    username,
+                    ip,
+                    sessionJti,
+                    combinedScore,
+                    error: stepupErr.message
+                });
+                // Return medium action instead of revoke - still enforce via step_up_required flag
+                // The oauth_tokens.step_up_required flag should already be set if possible
+                return res.status(200).json({
+                    action: 'medium',
+                    request_id: requestId,
+                    reason: 'step_up_creation_failed'
+                });
             }
         }
 

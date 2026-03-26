@@ -297,7 +297,8 @@ async function handleAuthorize(req, res, ip) {
 
     if (req.method === 'GET') {
         const { client_id, redirect_uri, response_type, state, scope,
-                code_challenge, code_challenge_method, pre_login_log_id } = req.query;
+                code_challenge, code_challenge_method, pre_login_log_id,
+                device: deviceParam, fingerprint: fingerprintParam } = req.query;
 
         if (response_type !== 'code')
             return res.status(400).json({ error: 'unsupported_response_type' });
@@ -346,19 +347,43 @@ async function handleAuthorize(req, res, ip) {
             return res.status(401).json({ error: 'unauthenticated', app_name: appName });
         }
 
-        // อ่าน device/fingerprint จาก cookies ที่ client ส่งมา
-        const cookies = parse(req.headers.cookie || '');
+        // อ่าน device/fingerprint จาก query params ก่อน (cross-origin cookies ไม่ reliable)
+        // ถ้าไม่มีค่อย fallback ไป cookies
         let device = 'unknown';
         let fingerprint = 'unknown';
-        try {
-            device = cookies.b_device ? decodeURIComponent(cookies.b_device).slice(0, 256) : 'unknown';
-        } catch (e) {
-            device = String(cookies.b_device || 'unknown').slice(0, 256);
+
+        if (deviceParam && typeof deviceParam === 'string') {
+            device = deviceParam.slice(0, 256);
         }
-        try {
-            fingerprint = cookies.b_fp ? decodeURIComponent(cookies.b_fp).slice(0, 64) : 'unknown';
-        } catch (e) {
-            fingerprint = String(cookies.b_fp || 'unknown').slice(0, 64);
+        if (fingerprintParam && typeof fingerprintParam === 'string' && /^[a-f0-9]{64}$/i.test(fingerprintParam)) {
+            fingerprint = fingerprintParam.slice(0, 64);
+        }
+
+        // DEBUG: log ค่าที่ได้
+        auditLog('OAUTH_DEVICE_FP_DEBUG', {
+            deviceParam,
+            fingerprintParam,
+            deviceResult: device,
+            fingerprintResult: fingerprint,
+            hasDeviceParam: !!deviceParam,
+            hasFingerprintParam: !!fingerprintParam,
+            fpParamLength: fingerprintParam?.length,
+            fpParamType: typeof fingerprintParam
+        });
+
+        // Fallback ไป cookies ถ้า query params ไม่มี
+        if (device === 'unknown' || fingerprint === 'unknown') {
+            const cookies = parse(req.headers.cookie || '');
+            try {
+                device = cookies.b_device ? decodeURIComponent(cookies.b_device).slice(0, 256) : device;
+            } catch (e) {
+                device = String(cookies.b_device || device).slice(0, 256);
+            }
+            try {
+                fingerprint = cookies.b_fp ? decodeURIComponent(cookies.b_fp).slice(0, 64) : fingerprint;
+            } catch (e) {
+                fingerprint = String(cookies.b_fp || fingerprint).slice(0, 64);
+            }
         }
 
         let preLoginLogId = null;

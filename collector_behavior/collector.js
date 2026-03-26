@@ -138,6 +138,12 @@
       });
     }
 
+    let _bearerToken = null;
+
+    function setBearerToken(token) {
+      _bearerToken = token;
+    }
+
     async function flush() {
       if (!events.length) return;
 
@@ -239,10 +245,17 @@
         const timeoutId  = setTimeout(function () { controller.abort(); }, 8000);
 
         try {
+          const headers = {
+            'Content-Type': 'application/json',
+          };
+          if (_bearerToken) {
+            headers['Authorization'] = 'Bearer ' + _bearerToken;
+          }
+
           const res = await fetch('/api/behavior', {
             method:      'POST',
             credentials: 'include',
-            headers:     { 'Content-Type': 'application/json' },
+            headers:     headers,
             body:        JSON.stringify(payload),
             signal:      controller.signal,
           });
@@ -299,7 +312,7 @@
       _mediumPendingSince = null;
     }
 
-    return { start, stop, clearMedium };
+    return { start, stop, clearMedium, setBearerToken };
   }
 
   window.BSSOBehaviorCollector = createCollector();

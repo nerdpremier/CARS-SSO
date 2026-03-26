@@ -422,12 +422,27 @@ async function handleAuthorize(req, res, ip) {
 
                 // ถ้าเป็น device ใหม่ → register ไว้
                 if (!isKnownDevice) {
-                    await client.query(
-                        `INSERT INTO user_devices (username, device, fingerprint, created_at)
-                         VALUES ($1, $2, $3, NOW())
-                         ON CONFLICT (username, fingerprint) DO NOTHING`,
-                        [decoded.username, device, fingerprint]
-                    );
+                    // ลอง INSERT แบบมี device ก่อน ถ้าไม่ได้ (ไม่มีคอลัมน์) ให้ INSERT แบบไม่มี device
+                    try {
+                        await client.query(
+                            `INSERT INTO user_devices (username, device, fingerprint, created_at)
+                             VALUES ($1, $2, $3, NOW())
+                             ON CONFLICT (username, fingerprint) DO NOTHING`,
+                            [decoded.username, device, fingerprint]
+                        );
+                    } catch (colErr) {
+                        // ถ้า error เพราะไม่มีคอลัมน์ device → ใช้ INSERT แบบเก่า
+                        if (colErr.message?.includes('column "device"')) {
+                            await client.query(
+                                `INSERT INTO user_devices (username, fingerprint, created_at)
+                                 VALUES ($1, $2, NOW())
+                                 ON CONFLICT (username, fingerprint) DO NOTHING`,
+                                [decoded.username, fingerprint]
+                            );
+                        } else {
+                            throw colErr;
+                        }
+                    }
                 }
             }
 

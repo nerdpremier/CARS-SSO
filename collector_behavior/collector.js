@@ -266,7 +266,7 @@
           const data = await res.json().catch(function () { return {}; });
           const action = (data.action || 'low').toLowerCase();
 
-          if (action === 'medium' && !_mediumPending) {
+          if ((action === 'medium' || action === 'step_up_required') && !_mediumPending) {
 
             _mediumPending = true;
             _mediumPendingSince = Date.now();

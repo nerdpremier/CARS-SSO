@@ -269,20 +269,5 @@ CREATE INDEX IF NOT EXISTS idx_stepup_challenges_expires
     ON stepup_challenges (expires_at);
 
 -- ============================================================
--- 13) SCHEMA MIGRATIONS TRACKING (Optional)
--- ============================================================
-CREATE TABLE IF NOT EXISTS schema_migrations (
-    id          SERIAL          PRIMARY KEY,
-    version     VARCHAR(20)     NOT NULL UNIQUE,
-    applied_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-    description TEXT
-);
-
--- Record initial schema version
-INSERT INTO schema_migrations (version, description)
-VALUES ('2.0.0', 'Complete B-SSO schema with behavior_risks and stepup_challenges')
-ON CONFLICT DO NOTHING;
-
--- ============================================================
 -- END OF SCHEMA
 -- =====================================================================

@@ -5,7 +5,7 @@ import { getClientIp }    from '../lib/ip-utils.js';
 import jwt    from 'jsonwebtoken';
 import { parse } from 'cookie';
 import { auditLog } from '../lib/response-utils.js';
-import { ensureBehaviorRisksSchema, getCombinedConfig, ensureOAuthClientsSchema } from '../lib/risk-score.js';
+import { ensureBehaviorRisksSchema, getCombinedConfig, ensureOAuthClientsSchema, ensureUserDevicesSchema } from '../lib/risk-score.js';
 import crypto from 'crypto';
 
 const USER_REGEX               = /^[a-zA-Z0-9]+$/;
@@ -293,6 +293,7 @@ async function handleAuthorize(req, res, ip) {
     }
     await ensureBehaviorRisksSchema();
     await ensureOAuthClientsSchema();
+    await ensureUserDevicesSchema();
 
     if (req.method === 'GET') {
         const { client_id, redirect_uri, response_type, state, scope,
@@ -347,8 +348,18 @@ async function handleAuthorize(req, res, ip) {
 
         // อ่าน device/fingerprint จาก cookies ที่ client ส่งมา
         const cookies = parse(req.headers.cookie || '');
-        const device = decodeURIComponent(cookies.b_device || 'unknown').slice(0, 256);
-        const fingerprint = decodeURIComponent(cookies.b_fp || 'unknown').slice(0, 64);
+        let device = 'unknown';
+        let fingerprint = 'unknown';
+        try {
+            device = cookies.b_device ? decodeURIComponent(cookies.b_device).slice(0, 256) : 'unknown';
+        } catch (e) {
+            device = String(cookies.b_device || 'unknown').slice(0, 256);
+        }
+        try {
+            fingerprint = cookies.b_fp ? decodeURIComponent(cookies.b_fp).slice(0, 64) : 'unknown';
+        } catch (e) {
+            fingerprint = String(cookies.b_fp || 'unknown').slice(0, 64);
+        }
 
         let preLoginLogId = null;
         const client = await pool.connect();

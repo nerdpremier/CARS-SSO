@@ -135,8 +135,8 @@ export default async function handler(req, res) {
 
     const { events, page, meta, features } = req.body;
 
-    if (!Array.isArray(events) || events.length === 0) {
-        return res.status(400).json({ error: 'events must be a non-empty array' });
+    if (!Array.isArray(events)) {
+        return res.status(400).json({ error: 'events must be an array' });
     }
 
     const safeFeatures = features && typeof features === 'object' ? features : {};

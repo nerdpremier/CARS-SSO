@@ -145,10 +145,9 @@
     }
 
     async function flush() {
-      if (!events.length) return;
-
+      // Always send data, even if no events - this captures inactivity patterns
       const batch = events;
-      events      = [];
+      events = [];
 
        const now = Date.now();
        if (lastFlushTs == null) lastFlushTs = now;

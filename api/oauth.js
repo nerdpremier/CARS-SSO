@@ -413,10 +413,45 @@ async function handleAuthorize(req, res, ip) {
 
             // 3. ถ้ายังไม่มี preLoginLogId → สร้างใหม่
             if (!preLoginLogId) {
+                // ดึง device/fingerprint จาก user_devices ถ้า query params ไม่มี
+                let finalDevice = device;
+                let finalFingerprint = fingerprint;
+                if (finalDevice === 'unknown' || finalFingerprint === 'unknown') {
+                    try {
+                        const existingRes = await client.query(
+                            `SELECT device, fingerprint FROM user_devices
+                             WHERE username = $1
+                               AND device != 'unknown'
+                               AND fingerprint != 'unknown'
+                             ORDER BY created_at DESC
+                             LIMIT 1`,
+                            [decoded.username]
+                        );
+                        if (existingRes.rows[0]) {
+                            finalDevice = existingRes.rows[0].device;
+                            finalFingerprint = existingRes.rows[0].fingerprint;
+                            auditLog('OAUTH_REUSED_FROM_USER_DEVICES', {
+                                username: decoded.username,
+                                device: finalDevice,
+                                fingerprint: finalFingerprint
+                            });
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
+                }
+
+                // ตรวจสอบว่า device นี้เคย register หรือไม่ (ใช้ finalFingerprint)
+                const deviceRes = await client.query(
+                    `SELECT id FROM user_devices
+                     WHERE username = $1 AND fingerprint = $2`,
+                    [decoded.username, finalFingerprint]
+                );
+                const isKnownDevice = deviceRes.rows.length > 0;
+
                 // คำนวณ risk score
                 // base: 0.1
                 // device ใหม่: +0.4
-                // session ใหม่ (ไม่มี jti เดิม): +0.0 (มี session อยู่แล้ว)
                 let score = 0.1;
                 if (!isKnownDevice) {
                     score += 0.4;
@@ -424,38 +459,6 @@ async function handleAuthorize(req, res, ip) {
 
                 const { medium: MEDIUM_THRESHOLD } = getCombinedConfig();
                 const level = score >= MEDIUM_THRESHOLD ? 'MEDIUM' : 'LOW';
-
-                // ตรวจสอบว่ามี entry ก่อนหน้าที่มี session_jti เดียวกันและมี device/fingerprint ที่ถูกต้องหรือไม่
-                // ถ้ามี → ใช้ค่านั้นแทน (ป้องกัน device/fingerprint = 'unknown')
-                let finalDevice = device;
-                let finalFingerprint = fingerprint;
-                if (device === 'unknown' || fingerprint === 'unknown') {
-                    try {
-                        const existingRes = await client.query(
-                            `SELECT device, fingerprint FROM login_risks
-                             WHERE username = $1 AND session_jti = $2
-                               AND device != 'unknown'
-                               AND fingerprint != 'unknown'
-                             ORDER BY created_at DESC
-                             LIMIT 1`,
-                            [decoded.username, decoded.jti]
-                        );
-                        if (existingRes.rows[0]) {
-                            finalDevice = existingRes.rows[0].device;
-                            finalFingerprint = existingRes.rows[0].fingerprint;
-                            auditLog('OAUTH_REUSED_DEVICE_FP', {
-                                username: decoded.username,
-                                sessionJti: decoded.jti,
-                                fromDevice: device,
-                                toDevice: finalDevice,
-                                fromFingerprint: fingerprint,
-                                toFingerprint: finalFingerprint
-                            });
-                        }
-                    } catch (reuseErr) {
-                        console.error('[WARN] oauth.js device/fingerprint reuse failed:', reuseErr.message);
-                    }
-                }
 
                 const insertRes = await client.query(
                     `INSERT INTO login_risks
@@ -466,15 +469,14 @@ async function handleAuthorize(req, res, ip) {
                 );
                 preLoginLogId = insertRes.rows[0].id;
 
-                // ถ้าเป็น device ใหม่ → register ไว้
+                // ถ้าเป็น device ใหม่ → register ไว้ (ใช้ finalDevice/finalFingerprint)
                 if (!isKnownDevice) {
-                    // ลอง INSERT แบบมี device ก่อน ถ้าไม่ได้ (ไม่มีคอลัมน์) ให้ INSERT แบบไม่มี device
                     try {
                         await client.query(
                             `INSERT INTO user_devices (username, device, fingerprint, created_at)
                              VALUES ($1, $2, $3, NOW())
                              ON CONFLICT (username, fingerprint) DO NOTHING`,
-                            [decoded.username, device, fingerprint]
+                            [decoded.username, finalDevice, finalFingerprint]
                         );
                     } catch (colErr) {
                         // ถ้า error เพราะไม่มีคอลัมน์ device → ใช้ INSERT แบบเก่า
@@ -483,7 +485,7 @@ async function handleAuthorize(req, res, ip) {
                                 `INSERT INTO user_devices (username, fingerprint, created_at)
                                  VALUES ($1, $2, NOW())
                                  ON CONFLICT (username, fingerprint) DO NOTHING`,
-                                [decoded.username, fingerprint]
+                                [decoded.username, finalFingerprint]
                             );
                         } else {
                             throw colErr;

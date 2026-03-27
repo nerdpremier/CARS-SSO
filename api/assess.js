@@ -75,9 +75,9 @@ export default async function handler(req, res) {
 
         const { username, device, fingerprint, reuse_log_id } = req.body;
         
-        // เพิ่ม user agent และข้อมูล device ที่ครบขึ้น (ไม่รวม CPU)
+        // เพิ่ม user agent และข้อมูล device ที่ครบขึ้น (ลบ CPU ออก)
         const userAgent = req.headers['user-agent'] || 'unknown';
-        const enhancedDevice = device ? `${device} | UA:${userAgent.slice(0, 100)}` : 'unknown';
+        const enhancedDevice = device ? `${device.replace(/ \| CPU:\d+/, '')} | UA:${userAgent.slice(0, 100)}` : 'unknown';
 
         if (typeof username !== 'string' || !username || username.length > 32) {
             return res.status(400).json({ error: 'Invalid request data' });

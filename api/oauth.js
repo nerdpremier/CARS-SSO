@@ -291,9 +291,14 @@ async function handleAuthorize(req, res, ip) {
     } catch (rlErr) {
         console.error('[WARN] rate-limit error (oauth-authorize), failing open:', rlErr.message);
     }
-    await ensureBehaviorRisksSchema();
-    await ensureOAuthClientsSchema();
-    await ensureUserDevicesSchema();
+    try {
+        await ensureBehaviorRisksSchema();
+        await ensureOAuthClientsSchema();
+        await ensureUserDevicesSchema();
+    } catch (schemaErr) {
+        console.error('[ERROR] oauth.js handleAuthorize schema init:', schemaErr.message);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
 
     if (req.method === 'GET') {
         const { client_id, redirect_uri, response_type, state, scope,
@@ -407,8 +412,8 @@ async function handleAuthorize(req, res, ip) {
                         });
                     }
                 } catch (dbErr) {
-            console.error('[ERROR] oauth.js handleAuthorize risk handling:', err);
-            throw err;
+            console.error('[ERROR] oauth.js handleAuthorize risk handling:', dbErr);
+            throw dbErr;
         } finally {
             client.release();
         }

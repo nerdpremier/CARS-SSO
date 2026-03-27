@@ -952,25 +952,8 @@ async function handleToken(req, res, ip) {
             );
             const newAccessTokenId = newAccessResult.rows[0].id;
 
-            try {
-                await tokenClient.query(
-                    `INSERT INTO login_risks
-                     (username, device, fingerprint, risk_level, pre_login_score, session_jti, is_success)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-                    [
-                        rt.username,
-                        `oauth_token_refreshed:${newAccessTokenId}`,
-                        refreshFingerprint,
-                        currentRiskLevel,
-                        currentRiskScore,
-                        `oauth:${newAccessTokenId}`,
-                        true
-                    ]
-                );
-                console.log(`[INFO] oauth.js: Created pre-login record for refreshed OAuth token ${newAccessTokenId}, score=${currentRiskScore}, level=${currentRiskLevel}`);
-            } catch (refreshPreLoginErr) {
-                console.error('[WARN] oauth.js refresh pre-login record creation failed:', refreshPreLoginErr.message);
-            }
+            // ไม่สร้าง login_risks ใหม่ตอน refresh token - ใช้ค่าเดิมจาก pre-login
+            console.log(`[INFO] oauth.js: Refreshed OAuth token ${newAccessTokenId}, reusing existing pre-login record, score=${currentRiskScore}, level=${currentRiskLevel}`);
 
             const newRefreshToken = crypto.randomBytes(32).toString('hex');
             const newRefreshHash  = hashToken(newRefreshToken);

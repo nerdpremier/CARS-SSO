@@ -74,6 +74,10 @@ export default async function handler(req, res) {
         }
 
         const { username, device, fingerprint, reuse_log_id } = req.body;
+        
+        // เพิ่ม user agent และข้อมูล device ที่ครบขึ้น (ไม่รวม CPU)
+        const userAgent = req.headers['user-agent'] || 'unknown';
+        const enhancedDevice = device ? `${device} | UA:${userAgent.slice(0, 100)}` : 'unknown';
 
         if (typeof username !== 'string' || !username || username.length > 32) {
             return res.status(400).json({ error: 'Invalid request data' });
@@ -96,6 +100,11 @@ export default async function handler(req, res) {
         }
         if (!SAFE_STRING_REGEX.test(fingerprint)) {
             return res.status(400).json({ error: 'Invalid request data' });
+        }
+        
+        // ตรวจสอบความยาวของ enhanced device ที่มี user agent
+        if (enhancedDevice.length > 400) {
+            return res.status(400).json({ error: 'Device info too long' });
         }
 
         if (reuse_log_id !== undefined) {
@@ -168,9 +177,19 @@ export default async function handler(req, res) {
                    AND created_at > NOW() - INTERVAL '60 seconds'`,
                 [username]
             );
+            
+            // ตรวจสอบ step-up attempts ใน 1 ชั่วโมง
+            const stepupCountRes = await client.query(
+                `SELECT COUNT(*) AS stepup_count
+                 FROM stepup_challenges
+                 WHERE username = $1
+                   AND created_at > NOW() - INTERVAL '1 hour'`,
+                [username]
+            );
 
             const fp_match       = deviceRes.rows.length > 0;
             const currentAttempt = Number(countRes.rows[0].recent_fails) + 1;
+            const stepupCount   = Number(stepupCountRes.rows[0]?.stepup_count || 0);
 
             const isOAuthFlow = req.body.next &&
                                 typeof req.body.next === 'string' &&
@@ -181,6 +200,7 @@ export default async function handler(req, res) {
             if (!fp_match) score += 0.4; 
             if (currentAttempt > 3)  score += 0.3;
             if (currentAttempt >= 5) score  = 1.0;
+            if (stepupCount >= 3) score = 1.0; // เกิน 3 step-up ใน 1 ชม ให้ revoke ทันที
 
             const { medium: MEDIUM_THRESHOLD } = getCombinedConfig();
             const level = score >= 1.0 ? 'HIGH' : (score >= MEDIUM_THRESHOLD ? 'MEDIUM' : 'LOW');
@@ -192,7 +212,7 @@ export default async function handler(req, res) {
                     `INSERT INTO login_risks (username, device, fingerprint, risk_level, pre_login_score, combined_action)
                      VALUES ($1, $2, $3, $4, $5, $6)
                      RETURNING id`,
-                    [username, device, fingerprint, level, score, actionForHigh]
+                    [username, enhancedDevice, fingerprint, level, score, actionForHigh]
                 );
                 insertedId = insertRes.rows[0]?.id;
                 await client.query('COMMIT');
@@ -207,7 +227,13 @@ export default async function handler(req, res) {
             }
 
             if (level === 'HIGH') {
-                auditLog('ASSESS_HIGH_RISK', { username, ip, score });
+                auditLog('ASSESS_HIGH_RISK', { 
+                    username, 
+                    ip, 
+                    score, 
+                    stepupCount,
+                    reason: stepupCount >= 3 ? 'stepup_limit_exceeded_1h' : 'high_risk_score'
+                });
                 return res.status(200).json({ risk_level: 'HIGH', logId: null });
             }
 

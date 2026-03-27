@@ -917,7 +917,6 @@ async function handleToken(req, res, ip) {
         tokenClient.release();
     }
 }
-}
 
 async function handleUserinfo(req, res, ip) {
     if (req.method !== 'GET') return res.status(405).send();

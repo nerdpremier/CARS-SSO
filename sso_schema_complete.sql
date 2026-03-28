@@ -141,7 +141,7 @@ CREATE INDEX IF NOT EXISTS idx_sso_tokens_expires ON sso_tokens (expires_at);
 -- ============================================================
 CREATE TABLE IF NOT EXISTS rate_limit_events (
     id         BIGSERIAL   PRIMARY KEY,
-    key        TEXT        NOT NULL,
+    key        TEXT        NOT NULL UNIQUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

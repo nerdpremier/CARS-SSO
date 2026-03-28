@@ -326,10 +326,18 @@ export default async function handler(req, res) {
             auditLog('TRACE_CORRELATION_ERROR', { message: preErr.message });
         }
 
-        auditLog('TRACE_CORRELATION_END', { loginRiskId, behaviorScore });
+        // ตรวจว่า IP เปลี่ยนจากตอน login หรือไม่
+        const ipChanged = !!(loginIp && ip && loginIp !== ip);
+        if (ipChanged) {
+            auditLog('BEHAVIOR_IP_CHANGED', {
+                username, loginIp, currentIp: ip, sessionJti,
+            });
+        }
+
+        auditLog('TRACE_CORRELATION_END', { loginRiskId, behaviorScore, ipChanged });
 
         if (behaviorScore != null && loginRiskId != null) {
-            combinedScore = combineRisk(preLoginScore, behaviorScore);
+            combinedScore = combineRisk(preLoginScore, behaviorScore, { ipChanged });
             combinedAction = actionFromCombinedScore(combinedScore);
 
             if (combinedAction === 'medium' && sessionJti) {

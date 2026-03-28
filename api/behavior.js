@@ -346,17 +346,10 @@ export default async function handler(req, res) {
             auditLog('TRACE_CORRELATION_ERROR', { message: preErr.message });
         }
 
-        const ipChanged = !!(loginIp && ip && loginIp !== ip);
-        if (ipChanged) {
-            auditLog('BEHAVIOR_IP_CHANGED', {
-                username, loginIp, currentIp: ip, sessionJti,
-            });
-        }
-
-        auditLog('TRACE_CORRELATION_END', { loginRiskId, behaviorScore, ipChanged });
+        auditLog('TRACE_CORRELATION_END', { loginRiskId, behaviorScore });
 
         if (behaviorScore != null && loginRiskId != null) {
-            combinedScore = combineRisk(preLoginScore, behaviorScore, { ipChanged });
+            combinedScore = combineRisk(preLoginScore, behaviorScore);
             combinedAction = actionFromCombinedScore(combinedScore);
 
             if (combinedAction === 'medium' && sessionJti) {

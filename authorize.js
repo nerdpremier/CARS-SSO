@@ -236,10 +236,15 @@ document.addEventListener('DOMContentLoaded', () => {
   $id('btn-allow')?.addEventListener('click', handleAllow);
   $id('btn-deny')?.addEventListener('click',  handleDeny);
 
-  const signOutLink = document.querySelector('a[href="/logout"]');
+  // Handle sign out link click
+  const signOutLink = $id('signout-link');
   if (signOutLink) {
     signOutLink.addEventListener('click', async (e) => {
       e.preventDefault();
+      
+      // Store current authorize URL to redirect back after login
+      const currentUrl = window.location.href;
+      sessionStorage.setItem('post_logout_redirect', currentUrl);
       
       // Get CSRF token first
       let csrfToken = null;
@@ -267,8 +272,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear cookies client side regardless of server response
         document.cookie = 'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
         document.cookie = 'csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
-        // Redirect back to authorize page
-        window.location.href = window.location.href;
+        // Redirect to logout page which will handle the redirect back to login with proper params
+        window.location.href = '/logout';
       });
     });
   }

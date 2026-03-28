@@ -520,7 +520,6 @@ async function handleAuthorize(req, res, ip) {
 
         let finalPreLoginLogId = pre_login_log_id;
         
-        // ไม่สร้าง login_risks ใหม่ ใช้แค่ค่าจาก pre-login phase
         if (!finalPreLoginLogId) {
             console.warn('[WARN] oauth.js: No pre_login_log_id provided, using null');
         }
@@ -872,7 +871,6 @@ async function handleToken(req, res, ip) {
             );
             const newAccessTokenId = newAccessResult.rows[0].id;
 
-            // ไม่สร้าง login_risks ใหม่ตอน refresh token - ใช้ค่าเดิมจาก pre-login
             console.log(`[INFO] oauth.js: Refreshed OAuth token ${newAccessTokenId}, reusing existing pre-login record, score=${currentRiskScore}, level=${currentRiskLevel}`);
 
             const newRefreshToken = crypto.randomBytes(32).toString('hex');

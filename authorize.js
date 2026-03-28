@@ -104,7 +104,6 @@ async function init() {
     data = await res.json();
 
     if (res.status === 401) {
-      // Clear any stale session cookie before redirecting to login
       document.cookie = 'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
       const nextUrl = `${window.location.href}`;
@@ -236,17 +235,14 @@ document.addEventListener('DOMContentLoaded', () => {
   $id('btn-allow')?.addEventListener('click', handleAllow);
   $id('btn-deny')?.addEventListener('click',  handleDeny);
 
-  // Handle sign out link click
   const signOutLink = $id('signout-link');
   if (signOutLink) {
     signOutLink.addEventListener('click', async (e) => {
       e.preventDefault();
       
-      // Store current authorize URL to redirect back after login
       const currentUrl = window.location.href;
       sessionStorage.setItem('post_logout_redirect', currentUrl);
       
-      // Get CSRF token first
       let csrfToken = null;
       try {
         const csrfRes = await fetch('/api/csrf', { credentials: 'include', cache: 'no-store' });
@@ -258,7 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('Failed to get CSRF token:', err);
       }
       
-      // Call logout API and clear cookies
       const headers = { 'Content-Type': 'application/json' };
       if (csrfToken) {
         headers['X-CSRF-Token'] = csrfToken;
@@ -269,10 +264,8 @@ document.addEventListener('DOMContentLoaded', () => {
         credentials: 'include',
         headers
       }).catch(() => {}).finally(() => {
-        // Clear cookies client side regardless of server response
         document.cookie = 'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
         document.cookie = 'csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
-        // Redirect to logout page which will handle the redirect back to login with proper params
         window.location.href = '/logout';
       });
     });

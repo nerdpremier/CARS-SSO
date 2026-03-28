@@ -20,8 +20,6 @@ const STEPUP_MAX_SENDS_PER_SESSION = 3;
 const STEPUP_MAX_RESENDS_PER_SESSION = 3;
 const STEPUP_TOKEN_TTL_MINUTES = 5;
 
-/* ─── Shared helpers ─── */
-
 function hashToken(token) {
     return crypto.createHash('sha256').update(token).digest('hex');
 }
@@ -57,8 +55,6 @@ async function requireBearerUser(req) {
     return { username: row.username, tokenHash, sessionJti: `oauth:${row.id}` };
 }
 
-/* ─── Schema helpers ─── */
-
 async function ensureStepupTokensSchema() {
     try {
         await pool.query(
@@ -92,16 +88,11 @@ async function ensureStepupChallengesHasReturnUrl() {
     } catch { }
 }
 
-/* ═══════════════════════════════════════════════
-   Main handler — routes by action
-   ═══════════════════════════════════════════════ */
-
 export default async function handler(req, res) {
     setSecurityHeaders(res);
 
     const ip = getClientIp(req);
 
-    // GET: only validate-token
     if (req.method === 'GET') {
         const action = req.query?.action;
         if (action === 'validate-token') return handleValidateToken(req, res, ip);
@@ -119,21 +110,15 @@ export default async function handler(req, res) {
 
     const action = req.body.action;
 
-    // ─── Bearer-authenticated actions (SDK / client app) ───
     if (action === 'send')           return handleSend(req, res, ip);
     if (action === 'verify')         return handleVerify(req, res, ip);
     if (action === 'validate-token') return handleValidateToken(req, res, ip);
 
-    // ─── CSRF-authenticated actions (B-SSO stepup-verify page) ───
     if (action === 'redirect-verify') return handleRedirectVerify(req, res, ip);
     if (action === 'redirect-resend') return handleRedirectResend(req, res, ip);
 
     return res.status(400).json({ error: 'Invalid action' });
 }
-
-/* ═══════════════════════════════════════════════
-   1. send — Bearer auth required (existing flow)
-   ═══════════════════════════════════════════════ */
 
 async function handleSend(req, res, ip) {
     try {
@@ -213,10 +198,6 @@ async function handleSend(req, res, ip) {
         return res.status(500).json({ error: 'Internal server error' });
     }
 }
-
-/* ═══════════════════════════════════════════════
-   2. verify — Bearer auth required (existing flow)
-   ═══════════════════════════════════════════════ */
 
 async function handleVerify(req, res, ip) {
     try {
@@ -310,11 +291,6 @@ async function handleVerify(req, res, ip) {
         return res.status(500).json({ error: 'Internal server error' });
     }
 }
-
-/* ═══════════════════════════════════════════════
-   3. redirect-verify — CSRF auth (B-SSO stepup-verify page)
-      ผู้ใช้กรอก OTP บนหน้า B-SSO → สร้าง stepup_token → redirect กลับแอปลูกค้า
-   ═══════════════════════════════════════════════ */
 
 async function handleRedirectVerify(req, res, ip) {
     try {
@@ -431,11 +407,6 @@ async function handleRedirectVerify(req, res, ip) {
         return res.status(500).json({ error: 'Internal server error' });
     }
 }
-
-/* ═══════════════════════════════════════════════
-   4. redirect-resend — CSRF auth (B-SSO stepup-verify page)
-      ส่ง OTP ใหม่ สำหรับ centralized MFA
-   ═══════════════════════════════════════════════ */
 
 async function handleRedirectResend(req, res, ip) {
     try {
@@ -554,11 +525,6 @@ async function handleRedirectResend(req, res, ip) {
         return res.status(500).json({ error: 'Internal server error' });
     }
 }
-
-/* ═══════════════════════════════════════════════
-   5. validate-token — Bearer auth required (SDK)
-      SDK ยืนยัน stepup_token หลัง redirect กลับจาก B-SSO
-   ═══════════════════════════════════════════════ */
 
 async function handleValidateToken(req, res, ip) {
     try {

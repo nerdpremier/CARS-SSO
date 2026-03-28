@@ -1,6 +1,3 @@
-// OAuth Params Preservation Utility
-// This script preserves OAuth parameters across page navigation
-
 (function() {
   const OAUTH_KEYS = ['client_id', 'redirect_uri', 'response_type', 'state', 'scope', 'code_challenge', 'code_challenge_method', 'pre_login_log_id'];
   const STORAGE_KEY = 'oauth_pending_flow';
@@ -49,7 +46,6 @@
     
     try {
       const u = new URL(url, window.location.origin);
-      // Only append to internal URLs
       if (u.origin !== window.location.origin) return url;
       
       for (const [key, value] of Object.entries(params)) {
@@ -67,7 +63,6 @@
     const savedParams = getSavedOAuthParams();
     if (!savedParams) return;
 
-    // Update all internal links
     document.querySelectorAll('a[href]').forEach(link => {
       const href = link.getAttribute('href');
       if (!href || href.startsWith('#') || href.startsWith('javascript:') || 
@@ -79,7 +74,6 @@
       }
     });
 
-    // Update forms
     document.querySelectorAll('form[action]').forEach(form => {
       const action = form.getAttribute('action');
       if (!action) return;
@@ -91,20 +85,17 @@
     });
   }
 
-  // On page load: check for OAuth params and save them
   const currentParams = getCurrentOAuthParams();
   if (currentParams) {
     saveOAuthParams(currentParams);
   }
 
-  // Update links on page load
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', updateInternalLinks);
   } else {
     updateInternalLinks();
   }
 
-  // Also update links dynamically added to the page
   const observer = new MutationObserver((mutations) => {
     let shouldUpdate = false;
     for (const mutation of mutations) {
@@ -122,7 +113,6 @@
 
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // Expose utility functions globally
   window.OAuthUtil = {
     getSavedParams: getSavedOAuthParams,
     saveParams: saveOAuthParams,

@@ -283,7 +283,6 @@ async function preLoginCheck() {
                 if (!dest) {
 
                     if (nextUrl && nextUrl.includes('/oauth/authorize')) {
-                        // แปะ pre_login_log_id ไปกับ OAuth authorize URL
                         const oauthUrl = new URL(nextUrl, window.location.origin);
                         oauthUrl.searchParams.set('pre_login_log_id', returnedLogId);
                         dest = oauthUrl.toString();
@@ -337,7 +336,6 @@ async function verifyMFA() {
             if (!dest) {
 
                 if (nextUrl && nextUrl.includes('/oauth/authorize')) {
-                    // แปะ pre_login_log_id ไปกับ OAuth authorize URL
                     const oauthUrl = new URL(nextUrl, window.location.origin);
                     oauthUrl.searchParams.set('pre_login_log_id', logId);
                     dest = oauthUrl.toString();
@@ -379,7 +377,7 @@ function startAccountLockdown(seconds) {
     updateStatus('danger',`Account locked. Please wait ${remaining} seconds.`); remaining--;
     clearInterval(countdownTimer);
     countdownTimer=setInterval(()=>{
-        if (remaining<=0) { clearInterval(countdownTimer); if (btn) btn.disabled=false; updateStatus('success','Lockout period ended. You may try again.'); return; }
+        if (remaining<=0) { clearInterval(countdownTimer); if (btn) btn.disabled=false; updateStatus('success','Lockout ended. Try again.'); return; }
         updateStatus('danger',`Account locked. Please wait ${remaining} seconds.`); remaining--;
     },1000);
 }
@@ -454,14 +452,12 @@ async function checkAuth() {
 }
 async function logout() {
     try { await secureFetch('/api/logout',{method:'POST'}); } catch {}
-    // Clear cookies on client side as well
     document.cookie = 'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
     document.cookie = 'csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
     window.location.replace('/login');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Clear any stale session cookie on login page load
     if (document.getElementById('login-form')) {
         document.cookie = 'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     }

@@ -11,7 +11,6 @@
   let csrfToken = null;
   let resendTimeout = null;
 
-  // Parse URL parameters
   function initializeParams() {
     const params = new URLSearchParams(window.location.search);
     challengeId = params.get('challenge_id');
@@ -24,14 +23,12 @@
       return false;
     }
 
-    // Set cancel link to return_url
     if (cancelLink) {
       cancelLink.href = returnUrl;
     }
     return true;
   }
 
-  // Fetch CSRF token
   async function getCsrfToken() {
     try {
       const response = await fetch('/api/csrf', {
@@ -51,7 +48,6 @@
     }
   }
 
-  // Show status message
   function showStatus(message, type) {
     statusBox.textContent = message;
     statusBox.className = 'status-box ' + type;
@@ -70,14 +66,12 @@
     showStatus(message, 'loading');
   }
 
-  // Clear status
   function clearStatus() {
     statusBox.hidden = true;
     statusBox.textContent = '';
     statusBox.className = 'status-box';
   }
 
-  // Verify OTP code
   async function verifyCode(code) {
     if (!csrfToken) {
       showError('Security token missing. Please refresh the page.');
@@ -127,7 +121,6 @@
         return;
       }
 
-      // Success
       showSuccess('Code verified successfully. Redirecting...');
       var stepupToken = data.stepup_token || data.token;
       var redirectUrl = returnUrl + (returnUrl.includes('?') ? '&' : '?') +
@@ -148,7 +141,6 @@
     }
   }
 
-  // Resend code
   async function resendCode() {
     if (!csrfToken) {
       showError('Security token missing. Please refresh the page.');
@@ -182,7 +174,6 @@
         return;
       }
 
-      // Update challengeId if a new one was returned
       if (data.new_challenge_id) {
         challengeId = data.new_challenge_id;
       }
@@ -190,7 +181,6 @@
       codeInput.value = '';
       codeInput.focus();
 
-      // Disable resend for 60 seconds
       resendBtn.disabled = true;
       var countdown = 60;
       resendBtn.textContent = 'Resend Code (' + countdown + 's)';
@@ -211,7 +201,6 @@
     }
   }
 
-  // Form submission
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     var code = codeInput.value.trim();
@@ -224,18 +213,15 @@
     verifyCode(code);
   });
 
-  // Resend button
   resendBtn.addEventListener('click', function(e) {
     e.preventDefault();
     resendCode();
   });
 
-  // Auto-focus and format input
   codeInput.addEventListener('input', function(e) {
     e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
   });
 
-  // Initialize
   if (initializeParams()) {
     getCsrfToken();
   }

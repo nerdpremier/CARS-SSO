@@ -134,7 +134,6 @@ export default async function handler(req, res) {
         return res.status(401).json({ action: 'revoke' });
     }
 
-    // Check if user is blocked (1 minute after revoke)
     if (username) {
         try {
             const blockCheck = await isUserBlocked(username, ip);
@@ -347,7 +346,6 @@ export default async function handler(req, res) {
             auditLog('TRACE_CORRELATION_ERROR', { message: preErr.message });
         }
 
-        // ตรวจว่า IP เปลี่ยนจากตอน login หรือไม่
         const ipChanged = !!(loginIp && ip && loginIp !== ip);
         if (ipChanged) {
             auditLog('BEHAVIOR_IP_CHANGED', {
@@ -425,7 +423,6 @@ export default async function handler(req, res) {
         });
 
         if (combinedAction === 'revoke') {
-            // Block user for 1 minute
             await blockUser(username, ip);
             
             if (authType === 'session_cookie') {
@@ -463,12 +460,10 @@ export default async function handler(req, res) {
 
         if (combinedAction === 'medium' && authType === 'oauth_bearer') {
             try {
-                // ensure return_url column exists
                 try {
                     await pool.query(`ALTER TABLE stepup_challenges ADD COLUMN IF NOT EXISTS return_url TEXT`);
                 } catch { }
 
-                // เช็คว่ามี stepup challenge ที่ยัง active อยู่หรือไม่
                 const existingStepupRes = await pool.query(
                     `SELECT id, created_at, expires_at, return_url
                      FROM stepup_challenges
@@ -480,7 +475,6 @@ export default async function handler(req, res) {
                     [username, sessionJti]
                 );
 
-                // นับจำนวน stepup challenges ที่สร้างใน 2 นาทีที่ผ่านมา
                 const recentChallengesRes = await pool.query(
                     `SELECT COUNT(*)::int as cnt
                      FROM stepup_challenges
@@ -490,7 +484,6 @@ export default async function handler(req, res) {
                 );
                 const recentChallengeCount = recentChallengesRes.rows[0]?.cnt || 0;
 
-                // ถ้ามากกว่า 1 challenge ใน 2 นาที ให้ revoke
                 if (recentChallengeCount >= 2) {
                     auditLog('OAUTH_STEP_UP_TOO_MANY_RECENT', {
                         username,
@@ -500,7 +493,6 @@ export default async function handler(req, res) {
                         combinedScore
                     });
 
-                    // Revoke token
                     const oauthTokenId = sessionJti.split(':')[1];
                     if (oauthTokenId) {
                         await pool.query(
@@ -509,7 +501,6 @@ export default async function handler(req, res) {
                         );
                     }
 
-                    // Block user for 1 minute
                     await blockUser(username, ip);
 
                     return res.status(403).json({
@@ -518,11 +509,9 @@ export default async function handler(req, res) {
                     });
                 }
 
-                // ดึง return_url จาก request (SDK ส่งมาบอกว่าผู้ใช้อยู่หน้าไหน)
                 const clientReturnUrl = req.body?.return_url || null;
 
                 if (existingStepupRes.rows.length > 0) {
-                    // มี stepup ที่ยัง active อยู่แล้ว ใช้ตัวเดิม
                     const existingStepup = existingStepupRes.rows[0];
                     auditLog('OAUTH_STEP_UP_ALREADY_EXISTS', {
                         username,
@@ -532,7 +521,6 @@ export default async function handler(req, res) {
                         combinedScore
                     });
 
-                    // สร้าง redirect URL ไปที่หน้า stepup-verify ของ B-SSO
                     const baseUrl = process.env.BASE_URL || '';
                     const stepupPageUrl = new URL('/stepup-verify', baseUrl);
                     stepupPageUrl.searchParams.set('challenge_id', existingStepup.id);
@@ -550,7 +538,6 @@ export default async function handler(req, res) {
                     });
                 }
 
-                // ไม่มี stepup ที่ active อยู่ สร้างใหม่
                 const stepupId = crypto.randomUUID();
                 const stepupCode = crypto.randomInt(100000, 1000000).toString();
 
@@ -558,7 +545,6 @@ export default async function handler(req, res) {
                 if (!pepper) {
                     console.error('[FATAL] MFA_PEPPER environment variable not set');
 
-                    // Block user for 1 minute
                     await blockUser(username, ip);
 
                     return res.status(500).json({
@@ -587,7 +573,6 @@ export default async function handler(req, res) {
                     }
                 }
 
-                // ส่ง OTP email จาก B-SSO (Centralized MFA)
                 let emailSent = false;
                 try {
                     const userEmail = await pool.query('SELECT email FROM users WHERE username = $1', [username]);
@@ -610,7 +595,6 @@ export default async function handler(req, res) {
                     console.error('[WARN] behavior.js auto step-up sendMail failed:', mailErr.message);
                 }
 
-                // สร้าง redirect URL ไปที่หน้า stepup-verify ของ B-SSO
                 const baseUrl = process.env.BASE_URL || '';
                 const stepupPageUrl = new URL('/stepup-verify', baseUrl);
                 stepupPageUrl.searchParams.set('challenge_id', stepupId);
@@ -627,18 +611,7 @@ export default async function handler(req, res) {
                     emailSent,
                     hasReturnUrl: !!clientReturnUrl
                 });
-
-                return res.status(200).json({
-                    action: 'step_up_redirect',
-                    request_id: requestId,
-                    stepup_id: stepupId,
-                    stepup_redirect_url: stepupPageUrl.toString(),
-                    expires_in: 300,
-                    reason: 'medium_risk_behavior_detected'
-                });
             } catch (stepupErr) {
-                console.error('[WARN] behavior.js auto step-up creation failed:', stepupErr.message);
-
                 auditLog('OAUTH_STEP_UP_CREATION_FAILED_SECURITY_ALERT', {
                     username,
                     ip,

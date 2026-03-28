@@ -75,7 +75,6 @@ export default async function handler(req, res) {
 
         const { username, device, fingerprint, reuse_log_id } = req.body;
         
-        // เพิ่ม user agent และข้อมูล device ที่ครบขึ้น (ลบ CPU ออก)
         const userAgent = req.headers['user-agent'] || 'unknown';
         const enhancedDevice = device ? `${device.replace(/ \| CPU:\d+/, '')} | UA:${userAgent.slice(0, 100)}` : 'unknown';
 
@@ -102,7 +101,6 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Invalid request data' });
         }
         
-        // ตรวจสอบความยาวของ enhanced device ที่มี user agent
         if (enhancedDevice.length > 400) {
             return res.status(400).json({ error: 'Device info too long' });
         }
@@ -178,7 +176,6 @@ export default async function handler(req, res) {
                 [username]
             );
             
-            // ตรวจสอบ step-up attempts ใน 1 ชั่วโมง
             const stepupCountRes = await client.query(
                 `SELECT COUNT(*) AS stepup_count
                  FROM stepup_challenges
@@ -200,7 +197,7 @@ export default async function handler(req, res) {
             if (!fp_match) score += 0.4; 
             if (currentAttempt > 3)  score += 0.3;
             if (currentAttempt >= 5) score  = 1.0;
-            if (stepupCount >= 3) score = 1.0; // เกิน 3 step-up ใน 1 ชม ให้ revoke ทันที
+            if (stepupCount >= 3) score = 1.0;
 
             const { medium: MEDIUM_THRESHOLD } = getCombinedConfig();
             const level = score >= 1.0 ? 'HIGH' : (score >= MEDIUM_THRESHOLD ? 'MEDIUM' : 'LOW');

@@ -242,7 +242,6 @@ export default async function handler(req, res) {
         if (action === 'login') {
             await ensureLoginRisksSchema();
             
-            // Check if user is blocked
             try {
                 const blockCheck = await isUserBlocked(username, ip);
                 if (blockCheck.blocked) {

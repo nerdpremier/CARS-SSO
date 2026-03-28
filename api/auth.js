@@ -1,7 +1,7 @@
 import '../startup-check.js';
 import { pool }                from '../lib/db.js';
 import { validateCsrfToken }   from '../lib/csrf-utils.js';
-import { checkRateLimit }      from '../lib/rate-limit.js';
+import { checkRateLimit, isUserBlocked }      from '../lib/rate-limit.js';
 import { getClientIp }         from '../lib/ip-utils.js';
 import { LOGID_TTL_MINUTES, TOTAL_MFA_MAX, SESSION_DURATION_SECONDS } from '../lib/constants.js';
 import { hashMfaCode }         from '../lib/mfa-utils.js';
@@ -241,6 +241,20 @@ export default async function handler(req, res) {
 
         if (action === 'login') {
             await ensureLoginRisksSchema();
+            
+            // Check if user is blocked
+            try {
+                const blockCheck = await isUserBlocked(username, ip);
+                if (blockCheck.blocked) {
+                    auditLog('LOGIN_USER_BLOCKED', { username, ip, remainingSeconds: blockCheck.remainingSeconds });
+                    return res.status(429).json({ 
+                        error: `Account temporarily locked. Please wait ${blockCheck.remainingSeconds} seconds.` 
+                    });
+                }
+            } catch (blockErr) {
+                console.error('[WARN] auth.js block check failed:', blockErr.message);
+            }
+            
             if (typeof username !== 'string' || typeof password !== 'string') {
                 return res.status(400).json({ error: 'Invalid request data' });
             }

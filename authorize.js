@@ -53,9 +53,6 @@ function getDeviceInfo() {
 async function init() {
   document.body.classList.remove('auth-pending');
   $id('main-card').hidden = false;
-  $id('loading-overlay').hidden = false;
-  $id('consent-ui').hidden = true;
-  $id('error-ui').hidden = true;
 
   const sp           = new URLSearchParams(window.location.search);
   const clientId     = sp.get('client_id');
@@ -66,6 +63,7 @@ async function init() {
   const scope                = sp.get('scope')                  || null;
   const codeChallenge        = sp.get('code_challenge')         || null;
   const codeChallengeMethod  = sp.get('code_challenge_method')  || null;
+  const preLoginLogIdParam   = sp.get('pre_login_log_id')       || null;
 
   if (!clientId || !redirectUri || !state || responseType !== 'code') {
     showError('Missing or invalid OAuth parameters.');
@@ -99,6 +97,8 @@ async function init() {
     if (scope)               apiUrl.searchParams.set('scope',                 scope);
     if (codeChallenge)       apiUrl.searchParams.set('code_challenge',        codeChallenge);
     if (codeChallengeMethod) apiUrl.searchParams.set('code_challenge_method', codeChallengeMethod);
+    if (preLoginLogIdParam && /^\d+$/.test(preLoginLogIdParam))
+                             apiUrl.searchParams.set('pre_login_log_id',      preLoginLogIdParam);
 
     const res = await fetch(apiUrl.toString(), { credentials: 'include' });
     data = await res.json();

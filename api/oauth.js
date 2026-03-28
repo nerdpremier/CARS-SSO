@@ -5,7 +5,7 @@ import { getClientIp }    from '../lib/ip-utils.js';
 import jwt    from 'jsonwebtoken';
 import { parse } from 'cookie';
 import { auditLog } from '../lib/response-utils.js';
-import { ensureBehaviorRisksSchema, getCombinedConfig, ensureOAuthClientsSchema, ensureUserDevicesSchema } from '../lib/risk-score.js';
+import { ensureBehaviorRisksSchema, getCombinedConfig, ensureOAuthClientsSchema, ensureUserDevicesSchema, ensureUsersSchema, ensureRevokedTokensSchema } from '../lib/risk-score.js';
 import crypto from 'crypto';
 
 const USER_REGEX               = /^[a-zA-Z0-9]+$/;
@@ -292,6 +292,8 @@ async function handleAuthorize(req, res, ip) {
         console.error('[WARN] rate-limit error (oauth-authorize), failing open:', rlErr.message);
     }
     try {
+        await ensureUsersSchema();
+        await ensureRevokedTokensSchema();
         await ensureBehaviorRisksSchema();
         await ensureOAuthClientsSchema();
         await ensureUserDevicesSchema();

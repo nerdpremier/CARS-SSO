@@ -704,9 +704,9 @@ async function handleToken(req, res, ip) {
 
             const accessResult = await tokenClient.query(
                 `INSERT INTO oauth_tokens (token_hash, token_type, client_id, username, scope, expires_at, pre_login_log_id, pre_login_score)
-                 VALUES ($1, 'access', $2, $3, $4, $5, $6, $7)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                  RETURNING id`,
-                [accessHash, client_id, codeRow.username, scope, accessExp, codePreLoginLogId, preLoginScore]
+                [accessHash, 'access', client_id, codeRow.username, scope, accessExp, codePreLoginLogId, preLoginScore]
             );
             const accessTokenId = accessResult.rows[0].id;
             auditLog('OAUTH_TOKEN_PRE_LOGIN_LINKED', { accessTokenId, preLoginLogId: codePreLoginLogId });

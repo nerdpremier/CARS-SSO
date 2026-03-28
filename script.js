@@ -448,10 +448,18 @@ async function checkAuth() {
 }
 async function logout() {
     try { await secureFetch('/api/logout',{method:'POST'}); } catch {}
+    // Clear cookies on client side as well
+    document.cookie = 'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
+    document.cookie = 'csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
     window.location.replace('/login');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Clear any stale session cookie on login page load
+    if (document.getElementById('login-form')) {
+        document.cookie = 'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    }
+
     if (document.getElementById('user-display')) checkAuth();
     document.getElementById('logout-btn')     ?.addEventListener('click', e=>withGuard(logout,e));
     document.getElementById('client-console-btn') ?.addEventListener('click', ()=>{window.location.href='/console';});

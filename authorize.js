@@ -104,6 +104,8 @@ async function init() {
     data = await res.json();
 
     if (res.status === 401) {
+      // Clear any stale session cookie before redirecting to login
+      document.cookie = 'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
       const nextUrl = `${window.location.href}`;
       const currentUrl = new URL(window.location.href);
@@ -238,9 +240,18 @@ document.addEventListener('DOMContentLoaded', () => {
   if (signOutLink) {
     signOutLink.addEventListener('click', (e) => {
       e.preventDefault();
-
-      sessionStorage.setItem('post_logout_redirect', window.location.href);
-      window.location.href = '/logout';
+      // Call logout API and clear cookies
+      fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      }).catch(() => {}).finally(() => {
+        // Clear cookies client side regardless of server response
+        document.cookie = 'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
+        document.cookie = 'csrf_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
+        // Redirect back to authorize page
+        window.location.href = window.location.href;
+      });
     });
   }
 

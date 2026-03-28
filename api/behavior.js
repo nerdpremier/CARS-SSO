@@ -3,7 +3,7 @@ import jwt                 from 'jsonwebtoken';
 import crypto              from 'crypto';
 import { parse }           from 'cookie';
 import { getClientIp }     from '../lib/ip-utils.js';
-import { checkRateLimit }  from '../lib/rate-limit.js';
+import { checkRateLimit, blockUser, isUserBlocked }  from '../lib/rate-limit.js';
 import { LOGID_TTL_MINUTES } from '../lib/constants.js';
 import {
     setSecurityHeaders,
@@ -77,9 +77,11 @@ export default async function handler(req, res) {
                 audience: 'b-sso-api'
             });
         } catch {
+            await blockUser(decoded?.username, ip);
             return res.status(401).json({ action: 'revoke' });
         }
         if (!decoded || typeof decoded.username !== 'string' || !decoded.jti) {
+            await blockUser(decoded?.username, ip);
             return res.status(401).json({ action: 'revoke' });
         }
         username = decoded.username;
@@ -90,6 +92,7 @@ export default async function handler(req, res) {
         const token = authHeader.slice(7).trim();
         if (!token || token.length > 128) {
             res.setHeader('WWW-Authenticate', 'Bearer realm="oauth", error="invalid_token"');
+            await blockUser(username, ip);
             return res.status(401).json({ action: 'revoke' });
         }
 
@@ -103,17 +106,20 @@ export default async function handler(req, res) {
 
             if (result.rows.length === 0) {
                 res.setHeader('WWW-Authenticate', 'Bearer realm="oauth", error="invalid_token"');
+                await blockUser(username, ip);
                 return res.status(401).json({ action: 'revoke' });
             }
 
             const row = result.rows[0];
             if (row.revoked_at) {
                 res.setHeader('WWW-Authenticate', 'Bearer realm="oauth", error="invalid_token"');
+                await blockUser(username, ip);
                 return res.status(401).json({ action: 'revoke' });
             }
             if (new Date() > new Date(row.expires_at)) {
                 res.setHeader('WWW-Authenticate',
                     'Bearer realm="oauth", error="invalid_token", error_description="token expired"');
+                await blockUser(username, ip);
                 return res.status(401).json({ action: 'revoke' });
             }
 
@@ -127,7 +133,25 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'Internal server error' });
         }
     } else {
+        await blockUser(username, ip);
         return res.status(401).json({ action: 'revoke' });
+    }
+
+    // Check if user is blocked (1 minute after revoke)
+    if (username) {
+        try {
+            const blockCheck = await isUserBlocked(username, ip);
+            if (blockCheck.blocked) {
+                auditLog('BEHAVIOR_USER_BLOCKED', { username, ip, remainingSeconds: blockCheck.remainingSeconds });
+                return res.status(429).json({
+                    action: 'revoke',
+                    reason: 'user_blocked',
+                    retry_after: blockCheck.remainingSeconds
+                });
+            }
+        } catch (blockErr) {
+            console.error('[WARN] behavior.js block check failed:', blockErr.message);
+        }
     }
 
     await ensureBehaviorRisksSchema();
@@ -404,6 +428,9 @@ export default async function handler(req, res) {
         });
 
         if (combinedAction === 'revoke') {
+            // Block user for 1 minute
+            await blockUser(username, ip);
+            
             if (authType === 'session_cookie') {
                 let exp = null;
                 try {
@@ -456,41 +483,74 @@ export default async function handler(req, res) {
                     [username, sessionJti]
                 );
 
+                // นับจำนวน stepup challenges ที่สร้างใน 2 นาทีที่ผ่านมา
+                const recentChallengesRes = await pool.query(
+                    `SELECT COUNT(*)::int as cnt
+                     FROM stepup_challenges
+                     WHERE username = $1 AND session_jti = $2
+                       AND created_at > NOW() - INTERVAL '2 minutes'`,
+                    [username, sessionJti]
+                );
+                const recentChallengeCount = recentChallengesRes.rows[0]?.cnt || 0;
+
+                // ถ้ามากกว่า 1 challenge ใน 2 นาที ให้ revoke
+                if (recentChallengeCount >= 2) {
+                    auditLog('OAUTH_STEP_UP_TOO_MANY_RECENT', {
+                        username,
+                        ip,
+                        sessionJti,
+                        recentChallengeCount,
+                        combinedScore
+                    });
+
+                    // Revoke token
+                    const oauthTokenId = sessionJti.split(':')[1];
+                    if (oauthTokenId) {
+                        await pool.query(
+                            'UPDATE oauth_tokens SET revoked_at = NOW() WHERE id = $1 AND revoked_at IS NULL',
+                            [oauthTokenId]
+                        );
+                    }
+
+                    // Block user for 1 minute
+                    await blockUser(username, ip);
+
+                    return res.status(403).json({
+                        action: 'revoke',
+                        reason: 'too_many_stepup_challenges_in_2min'
+                    });
+                }
+
                 // ดึง return_url จาก request (SDK ส่งมาบอกว่าผู้ใช้อยู่หน้าไหน)
                 const clientReturnUrl = req.body?.return_url || null;
 
                 if (existingStepupRes.rows.length > 0) {
-                    // มี stepup ที่ยัง active อยู่แล้ว ตรวจสอบว่าเก่าเกินไปหรือไม่
+                    // มี stepup ที่ยัง active อยู่แล้ว ใช้ตัวเดิม
                     const existingStepup = existingStepupRes.rows[0];
-                    const now = new Date();
-                    const createdAt = new Date(existingStepup.created_at);
-                    const ageMinutes = (now - createdAt) / (1000 * 60);
-                    
-                    // ถ้ามีการสร้าง challenge ใน 2 นาที ให้ revoke token ทันที
-                    if (ageMinutes <= 2) {
-                        auditLog('OAUTH_STEP_UP_RAPID_CHALLENGE', {
-                            username,
-                            ip,
-                            existingStepupId: existingStepup.id,
-                            sessionJti,
-                            ageMinutes: Math.round(ageMinutes),
-                            combinedScore
-                        });
+                    auditLog('OAUTH_STEP_UP_ALREADY_EXISTS', {
+                        username,
+                        ip,
+                        existingStepupId: existingStepup.id,
+                        sessionJti,
+                        combinedScore
+                    });
 
-                        // Revoke token
-                        const oauthTokenId = sessionJti.split(':')[1];
-                        if (oauthTokenId) {
-                            await pool.query(
-                                'UPDATE oauth_tokens SET revoked_at = NOW() WHERE id = $1 AND revoked_at IS NULL',
-                                [oauthTokenId]
-                            );
-                        }
-
-                        return res.status(403).json({
-                            action: 'revoke',
-                            reason: 'too_many_stepup_challenges'
-                        });
+                    // สร้าง redirect URL ไปที่หน้า stepup-verify ของ B-SSO
+                    const baseUrl = process.env.BASE_URL || '';
+                    const stepupPageUrl = new URL('/stepup-verify', baseUrl);
+                    stepupPageUrl.searchParams.set('challenge_id', existingStepup.id);
+                    if (clientReturnUrl || existingStepup.return_url) {
+                        stepupPageUrl.searchParams.set('return_url', clientReturnUrl || existingStepup.return_url);
                     }
+
+                    return res.status(200).json({
+                        action: 'step_up_redirect',
+                        request_id: requestId,
+                        stepup_id: existingStepup.id,
+                        stepup_redirect_url: stepupPageUrl.toString(),
+                        expires_in: Math.floor((new Date(existingStepup.expires_at) - new Date()) / 1000),
+                        reason: 'medium_risk_behavior_detected'
+                    });
                 }
 
                 // ไม่มี stepup ที่ active อยู่ สร้างใหม่
@@ -500,6 +560,9 @@ export default async function handler(req, res) {
                 const pepper = process.env.MFA_PEPPER;
                 if (!pepper) {
                     console.error('[FATAL] MFA_PEPPER environment variable not set');
+
+                    // Block user for 1 minute
+                    await blockUser(username, ip);
 
                     return res.status(500).json({
                         action: 'revoke',

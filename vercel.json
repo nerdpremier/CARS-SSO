@@ -33,6 +33,7 @@
     { "source": "/reset-password",  "destination": "/reset-password.html" },
     { "source": "/oauth/authorize", "destination": "/authorize.html" },
     { "source": "/stepup-verify",   "destination": "/stepup-verify.html" },
+    { "source": "/mfa-stepup",     "destination": "/stepup-verify.html" },
     { "source": "/console",       "destination": "/client-console.html" },
     { "source": "/front-logout",    "destination": "/front-logout.html" }
   ],

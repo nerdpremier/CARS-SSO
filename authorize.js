@@ -106,9 +106,13 @@ async function init() {
     if (res.status === 401) {
       document.cookie = 'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
-      const nextUrl = `${window.location.href}`;
       const currentUrl = new URL(window.location.href);
       const redirectBack = currentUrl.searchParams.get('redirect_uri');
+      
+      // Remove pre_login_log_id to prevent stale ID issues when switching browsers
+      currentUrl.searchParams.delete('pre_login_log_id');
+      const nextUrl = currentUrl.toString();
+      
       const loginUrl = new URL('/login', window.location.origin);
       loginUrl.searchParams.set('next', nextUrl);
       if (redirectBack) {

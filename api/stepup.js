@@ -484,9 +484,9 @@ async function handleRedirectResend(req, res, ip) {
             const newCodeHash = hashStepupCode(newChallengeId, newCode);
 
             await client.query(
-                `INSERT INTO stepup_challenges (id, username, code_hash, expires_at, return_url)
-                 VALUES ($1, $2, $3, NOW() + INTERVAL '5 minutes', $4)`,
-                [newChallengeId, username, newCodeHash, challenge.return_url || null]
+                `INSERT INTO stepup_challenges (id, username, session_jti, code_hash, expires_at, return_url)
+                 VALUES ($1, $2, $3, $4, NOW() + INTERVAL '5 minutes', $5)`,
+                [newChallengeId, username, null, newCodeHash, challenge.return_url || null]
             );
 
             await client.query('COMMIT');

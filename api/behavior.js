@@ -462,7 +462,8 @@ export default async function handler(req, res) {
                     `SELECT COUNT(*)::int as cnt
                      FROM stepup_challenges
                      WHERE username = $1 AND session_jti = $2
-                       AND created_at > NOW() - INTERVAL '2 minutes'`,
+                       AND created_at > NOW() - INTERVAL '2 minutes'
+                       AND verified_at IS NULL`,
                     [username, sessionJti]
                 );
                 const recentChallengeCount = recentChallengesRes.rows[0]?.cnt || 0;
@@ -486,7 +487,7 @@ export default async function handler(req, res) {
 
                     await blockUser(username, ip);
 
-                    return res.status(403).json({
+                    return res.status(200).json({
                         action: 'revoke',
                         reason: 'too_many_stepup_challenges_in_2min'
                     });

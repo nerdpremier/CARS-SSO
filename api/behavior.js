@@ -604,6 +604,15 @@ export default async function handler(req, res) {
                     emailSent,
                     hasReturnUrl: !!clientReturnUrl
                 });
+
+                return res.status(200).json({
+                    action: 'step_up_redirect',
+                    request_id: requestId,
+                    stepup_id: stepupId,
+                    stepup_redirect_url: stepupPageUrl.toString(),
+                    expires_in: 300,
+                    reason: 'medium_risk_behavior_detected'
+                });
             } catch (stepupErr) {
                 auditLog('OAUTH_STEP_UP_CREATION_FAILED_SECURITY_ALERT', {
                     username,
